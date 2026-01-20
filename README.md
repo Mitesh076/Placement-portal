@@ -74,26 +74,7 @@ Built using the **MERN Stack**, the platform ensures transparency, real-time upd
 
 ---
 
-## 📂 Project Structure
-placement-management-system/
-│
-├── frontend/
-│ ├── components/
-│ │ ├── admin/
-│ │ ├── student/
-│ │ ├── company/
-│ │ └── common/
-│ ├── pages/
-│ ├── layouts/
-│ └── App.jsx
-│
-├── backend/
-│ ├── models/
-│ ├── controllers/
-│ ├── routes/
-│ └── server.js
-│
-└── README.md
+
 
 
 
