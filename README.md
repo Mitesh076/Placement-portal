@@ -75,4 +75,65 @@ Built using the **MERN Stack**, the platform ensures transparency, real-time upd
 ---
 
 ## 📂 Project Structure
+placement-management-system/
+│
+├── frontend/
+│ ├── components/
+│ │ ├── admin/
+│ │ ├── student/
+│ │ ├── company/
+│ │ └── common/
+│ ├── pages/
+│ ├── layouts/
+│ └── App.jsx
+│
+├── backend/
+│ ├── models/
+│ ├── controllers/
+│ ├── routes/
+│ └── server.js
+│
+└── README.md
+
+
+
+## 🖥️ UI Modules Implemented
+
+### Admin Dashboard
+- User Management
+- Student Verification
+- Company Management
+- Reports & Analytics
+- Settings & Theme Control
+
+### Student Dashboard
+- Profile Management
+- Document Upload
+- Placement Dashboard
+- Applied Companies
+- Placement Status
+
+### Company Dashboard
+- Company Profile
+- Applicants List
+- Interview Rounds
+- Selected Students
+
+
+
+## 📌 Installation & Setup (Frontend)
+
+
+# Clone the repository
+git clone https://github.com/your-username/placement-management-system.git
+
+# Navigate to frontend
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
 
