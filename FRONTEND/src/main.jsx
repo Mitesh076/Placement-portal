@@ -27,6 +27,7 @@ import ApplicantsList from "./Companies/ApplicantList.jsx";
 import SelectedStudents from "./Companies/SelectedStudents.jsx";
 import InterviewRounds from "./Companies/InterviewRounds.jsx";
 import CompanySettings from "./Companies/CompanySettings.jsx";
+import Academic from "./Student/Academic.jsx";
 
 const router = createBrowserRouter([
   {
@@ -78,6 +79,10 @@ const router = createBrowserRouter([
       {
         path: "dashboard",
         element: <StudentDashboard />,
+      },
+      {
+        path: "academics",
+        element: <Academic />,
       },
       {
         path: "applied",

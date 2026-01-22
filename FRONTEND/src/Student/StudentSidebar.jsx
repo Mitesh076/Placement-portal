@@ -6,6 +6,8 @@ import {
   CheckCircle,
   User,
   Files,
+  BookCheck,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -26,6 +28,12 @@ export default function Sidebar() {
 
         {/* Menu */}
         <ul className="flex-1 px-3 py-4 space-y-1">
+          <li>
+            <NavLink to="/students/profile" className={linkClass}>
+              <User size={18} />
+              Profile
+            </NavLink>
+          </li>
           <li>
             <NavLink to="/students/dashboard" className={linkClass}>
               <LayoutDashboard size={18} />
@@ -53,11 +61,10 @@ export default function Sidebar() {
               Placement Status
             </NavLink>
           </li>
-
           <li>
-            <NavLink to="/students/profile" className={linkClass}>
-              <User size={18} />
-              Profile
+            <NavLink to="/students/academics" className={linkClass}>
+              <BookOpen size={18} />
+              Academic Details
             </NavLink>
           </li>
 

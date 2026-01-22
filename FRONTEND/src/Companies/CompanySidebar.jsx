@@ -26,16 +26,15 @@ export default function CompanySidebar() {
         {/* Menu */}
         <ul className="flex-1 px-3 py-4 space-y-1">
           <li>
-            <NavLink to="/company/dashboard" className={linkClass}>
-              <LayoutDashboard size={18} />
-              Company Dashboard
-            </NavLink>
-          </li>
-
-          <li>
             <NavLink to="/company/profile" className={linkClass}>
               <Building2 size={18} />
               Company Profile
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/company/dashboard" className={linkClass}>
+              <LayoutDashboard size={18} />
+              Company Dashboard
             </NavLink>
           </li>
 
