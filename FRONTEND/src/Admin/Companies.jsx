@@ -36,10 +36,6 @@ export default function Companies() {
               icon={<CalendarDays />}
             />
           </div>
-
-          <button className="h-10 px-5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700">
-            + Add Company
-          </button>
         </div>
 
         {/* Visited Companies */}

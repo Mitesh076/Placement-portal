@@ -26,6 +26,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-6 w-full p-5">
+      
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold">Student Dashboard</h2>

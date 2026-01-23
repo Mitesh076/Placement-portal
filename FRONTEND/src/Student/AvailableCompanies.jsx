@@ -7,11 +7,14 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Filter,
+  Briefcase,
+  Search,
 } from "lucide-react";
 
 export default function AvailableCompanies() {
   const [search, setSearch] = useState("");
+
+  const [filter, setFilter] = useState("All");
   const [selectedCompany, setSelectedCompany] = useState(null);
 
   const companies = [
@@ -68,23 +71,56 @@ export default function AvailableCompanies() {
   return (
     <div className="space-y-6 w-full p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className=" items-center">
         <h2 className="text-xl font-semibold">Available Companies</h2>
+        <p className="text-sm text-slate-500">
+          Overview of Available companies
+        </p>
         <span className="text-sm text-slate-500">
           Total: {filteredCompanies.length}
         </span>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Filter className="absolute left-3 top-2.5 text-slate-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search company or role..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500"
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard icon={<Briefcase />} label="Total Companies" value="12" />
+
+        <StatCard icon={<Building2 />} label="Eligible Companies" value="12" />
+
+        <StatCard
+          icon={<Briefcase />}
+          label="Not Eligible Companies"
+          value="6"
         />
+        <StatCard icon={<Briefcase />} label="Applied Companies" value="6" />
+      </div>
+
+      {/* Search */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3 top-2.5 text-slate-400"
+            size={18}
+          />
+          <input
+            type="text"
+            placeholder="Search company or role..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500"
+        >
+          <option>All</option>
+          <option>Applied</option>
+          <option>Not applied</option>
+          <option>Eligible</option>
+          <option>Not Eligible </option>
+        </select>
       </div>
 
       {/* Company Cards */}
@@ -193,6 +229,25 @@ function Detail({ label, value }) {
     <div>
       <p className="text-xs text-slate-500">{label}</p>
       <p className="font-medium">{value}</p>
+    </div>
+  );
+}
+function StatCard({ icon, label, value, highlight }) {
+  return (
+    <div className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-4">
+      <div className="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-slate-500">{label}</p>
+        <p
+          className={`text-lg font-semibold ${
+            highlight ? "text-orange-600" : "text-slate-800"
+          }`}
+        >
+          {value}
+        </p>
+      </div>
     </div>
   );
 }

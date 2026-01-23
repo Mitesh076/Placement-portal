@@ -8,6 +8,7 @@ import {
   XCircle,
   Eye,
   Trash2,
+  Briefcase,
 } from "lucide-react";
 
 export default function AppliedCompanies() {
@@ -93,12 +94,46 @@ export default function AppliedCompanies() {
         return <Clock size={16} />;
     }
   };
+  function StatCard({ icon, label, value, highlight }) {
+    return (
+      <div className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-4">
+        <div className="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+          {icon}
+        </div>
+        <div>
+          <p className="text-xs text-slate-500">{label}</p>
+          <p
+            className={`text-lg font-semibold ${
+              highlight ? "text-orange-600" : "text-slate-800"
+            }`}
+          >
+            {value}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full p-6">
+      <div>
+        <h2 className="text-xl font-semibold">Applied Companies </h2>
+        <p className="text-sm text-slate-500">
+          Overview of Applied for companies
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard icon={<Briefcase />} label="Total Companies" value="12" />
+
+        <StatCard icon={<Building2 />} label="Eligible Companies" value="12" />
+        <StatCard icon={<Briefcase />} label="Applied Companies" value="6" />
+      </div>
       {/* Header */}
+
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Applied Companies</h2>
+        <h2 className="text-xl font-semibold">List of Companies</h2>
         <span className="text-sm text-slate-500">
           Total Applications: {companies.length}
         </span>

@@ -7,6 +7,7 @@ import {
   Layers,
   Trophy,
 } from "lucide-react";
+import Offers from "./Offers";
 
 export default function PlacementStatus() {
   const applications = [
@@ -49,7 +50,7 @@ export default function PlacementStatus() {
   ];
 
   return (
-    <div className="space-y-6 w-full p-6">
+    <div className="space-y-6 w-full p-6 overflow-y-scroll">
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold">Placement Status</h2>
@@ -64,6 +65,9 @@ export default function PlacementStatus() {
         <SummaryCard label="Shortlisted" value="1" icon={<Clock />} />
         <SummaryCard label="Selected" value="1" icon={<Trophy />} />
         <SummaryCard label="Rejected" value="1" icon={<XCircle />} />
+      </div>
+      <div>
+        <Offers />
       </div>
 
       {/* Table */}

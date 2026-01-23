@@ -7,7 +7,7 @@ import {
   Building2,
 } from "lucide-react";
 
-export default function PostCompanyPage() {
+export default function AddCompany() {
   return (
     <div className="h-screen w-screen flex bg-slate-100 overflow-hidden">
       {/* Main Content */}
@@ -16,7 +16,7 @@ export default function PostCompanyPage() {
           {/* Header */}
           <div>
             <h2 className="text-2xl font-semibold text-slate-800">
-              Post New Company
+              Add New Company
             </h2>
             <p className="text-sm text-slate-500">
               Publish upcoming placement drive details for students
@@ -104,7 +104,7 @@ export default function PostCompanyPage() {
                   type="submit"
                   className="h-11 px-6 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
                 >
-                  Post Company
+                  Add Company
                 </button>
               </div>
             </form>

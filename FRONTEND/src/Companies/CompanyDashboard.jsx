@@ -86,8 +86,6 @@ export default function CompanyDashboard() {
           onClick={() => setVerified(true)}
           disabled={!profileCompleted}
         />
-
-        {/* Request Eligible Students */}
         <StepBanner
           completed={requested}
           message="Request eligible student details"

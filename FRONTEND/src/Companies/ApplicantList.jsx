@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, CheckCircle, Layers } from "lucide-react";
+import { Users, CheckCircle, Layers, AlertCircle } from "lucide-react";
 
 export default function ApplicantsPage() {
   // Applicants data with rounds progress
@@ -31,6 +31,10 @@ export default function ApplicantsPage() {
   ]);
 
   const [search, setSearch] = useState("");
+
+  const [profileCompleted, setProfileCompleted] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const [requested, setRequested] = useState(false);
 
   // Stats calculation
   const totalApplicants = applicants.length;
@@ -69,6 +73,16 @@ export default function ApplicantsPage() {
           value={shortlisted}
         />
         <StatCard icon={<CheckCircle />} label="Selected" value={selected} />
+      </div>
+
+      <div>
+        <StepBanner
+          completed={requested}
+          message="Request eligible student details"
+          buttonLabel="Request Students"
+          onClick={() => setRequested(true)}
+          disabled={!verified}
+        />
       </div>
 
       {/* Search Input */}
@@ -159,6 +173,39 @@ function TableHeader({ title }) {
   return (
     <div className="h-14 px-6 flex items-center border-b font-semibold text-indigo-700">
       {title}
+    </div>
+  );
+}
+
+function StepBanner({ completed, message, buttonLabel, onClick, disabled }) {
+  const bannerColor = completed
+    ? "bg-green-50 border-green-200 text-green-800"
+    : "bg-yellow-50 border-yellow-200 text-yellow-800";
+  const Icon = completed ? CheckCircle : AlertCircle;
+
+  return (
+    <div
+      className={`rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border ${bannerColor}`}
+    >
+      <div className="flex items-start gap-3">
+        <Icon
+          className={`mt-0.5 ${completed ? "text-green-600" : "text-yellow-600"}`}
+        />
+        <p className="text-sm">{message}</p>
+      </div>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`px-4 py-2 text-sm font-medium rounded-lg text-white transition ${
+          completed
+            ? "bg-green-600 hover:bg-green-700"
+            : disabled
+              ? "bg-yellow-400 cursor-not-allowed"
+              : "bg-yellow-600 hover:bg-yellow-700"
+        }`}
+      >
+        {completed ? "Completed" : buttonLabel}
+      </button>
     </div>
   );
 }

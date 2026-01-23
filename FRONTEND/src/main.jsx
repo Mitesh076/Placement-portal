@@ -8,7 +8,6 @@ import Dashboard from "./Admin/Dashboard.jsx";
 import AllUsers from "./Admin/AllUsers.jsx";
 import Students from "./Admin/Students.jsx";
 import Verification from "./Admin/Verification.jsx";
-import PostCompanies from "./Admin/PostCompanies.jsx";
 import Companies from "./Admin/Companies.jsx";
 import Reports from "./Admin/Reports.jsx";
 import Setting from "./Admin/Setting.jsx";
@@ -28,6 +27,8 @@ import SelectedStudents from "./Companies/SelectedStudents.jsx";
 import InterviewRounds from "./Companies/InterviewRounds.jsx";
 import CompanySettings from "./Companies/CompanySettings.jsx";
 import Academic from "./Student/Academic.jsx";
+import AddCompany from "./Admin/AddCompany.jsx";
+import PostCompany from "./Admin/PostCompany.jsx";
 
 const router = createBrowserRouter([
   {
@@ -55,8 +56,12 @@ const router = createBrowserRouter([
         element: <Verification />,
       },
       {
-        path: "post-company",
-        element: <PostCompanies />,
+        path: "addcompany",
+        element: <AddCompany />,
+      },
+      {
+        path: "postcompany",
+        element: <PostCompany />,
       },
       {
         path: "companies",
