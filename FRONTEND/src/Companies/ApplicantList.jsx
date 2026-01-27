@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Users, CheckCircle, Layers, AlertCircle } from "lucide-react";
 
-export default function ApplicantsPage() {
-  // Applicants data with rounds progress
-  const [applicants, setApplicants] = useState([
+export default function ApplicantList() {
+  /* ---------- MASTER FLOW STATE ---------- */
+  const [requested, setRequested] = useState(false);
+
+  /* ---------- APPLICANTS (Loaded AFTER request) ---------- */
+  const applicantsData = [
     {
       id: 1,
       name: "Rahul Sharma",
@@ -28,22 +31,27 @@ export default function ApplicantsPage() {
       rounds: ["Cleared", "Rejected"],
       status: "Not Selected",
     },
-  ]);
+  ];
 
+  const [applicants, setApplicants] = useState([]);
   const [search, setSearch] = useState("");
 
-  const [profileCompleted, setProfileCompleted] = useState(false);
-  const [verified, setVerified] = useState(false);
-  const [requested, setRequested] = useState(false);
+  /* ---------- REQUEST HANDLER ---------- */
+  const handleRequestApplicants = () => {
+    setRequested(true);
+    setApplicants(applicantsData); // simulate admin response
+  };
 
-  // Stats calculation
-  const totalApplicants = applicants.length;
-  const shortlisted = applicants.filter((a) =>
-    a.rounds.includes("Cleared"),
-  ).length;
-  const selected = applicants.filter((a) => a.status === "Selected").length;
+  /* ---------- STATS (Only AFTER request) ---------- */
+  const totalApplicants = requested ? applicants.length : "-";
+  const shortlisted = requested
+    ? applicants.filter((a) => a.rounds.includes("Cleared")).length
+    : "-";
+  const selected = requested
+    ? applicants.filter((a) => a.status === "Selected").length
+    : "-";
 
-  // Filtered applicants based on search
+  /* ---------- SEARCH ---------- */
   const filteredApplicants = applicants.filter(
     (a) =>
       a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,109 +64,112 @@ export default function ApplicantsPage() {
       <div>
         <h2 className="text-2xl font-bold text-indigo-700">Applicants</h2>
         <p className="text-sm text-slate-500 mt-1">
-          View the status and rounds progress of all applicants
+          Applicants received from admin after request
         </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
-          icon={<Users />}
           label="Total Applicants"
           value={totalApplicants}
+          icon={<Users />}
         />
-        <StatCard
-          icon={<Layers />}
-          label="Shortlisted (Cleared at least 1 round)"
-          value={shortlisted}
-        />
-        <StatCard icon={<CheckCircle />} label="Selected" value={selected} />
+        <StatCard label="Shortlisted" value={shortlisted} icon={<Layers />} />
+        <StatCard label="Selected" value={selected} icon={<CheckCircle />} />
       </div>
 
-      <div>
-        <StepBanner
-          completed={requested}
-          message="Request eligible student details"
-          buttonLabel="Request Students"
-          onClick={() => setRequested(true)}
-          disabled={!verified}
-        />
-      </div>
+      {/* REQUEST BANNER */}
+      <StepBanner
+        completed={requested}
+        message={
+          requested
+            ? "Applicants received from admin"
+            : "Request eligible and applied students from admin"
+        }
+        buttonLabel="Request Applicants"
+        onClick={handleRequestApplicants}
+      />
 
-      {/* Search Input */}
-      <div className="mt-4">
+      {/* Search (only after request) */}
+      {requested && (
         <input
           type="text"
           placeholder="Search by name or branch..."
-          className="w-full md:w-1/3 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full md:w-1/3 p-2 border rounded-lg"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      )}
 
       {/* Applicants Table */}
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden mt-6">
+      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         <TableHeader title="Applicants List" />
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-6 py-3 text-left">Name</th>
-              <th className="px-6 py-3 text-left">Branch</th>
-              <th className="px-6 py-3 text-left">CGPA</th>
-              <th className="px-6 py-3 text-left">Process</th>
-              <th className="px-6 py-3 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredApplicants.map((a) => (
-              <tr key={a.id} className="border-t hover:bg-indigo-50">
-                <td className="px-6 py-3 font-medium">{a.name}</td>
-                <td className="px-6 py-3">{a.branch}</td>
-                <td className="px-6 py-3 font-semibold">{a.cgpa}</td>
 
-                {/* Process Rounds */}
-                <td className="px-6 py-3 flex gap-2">
-                  {a.rounds.map((r, i) => (
-                    <span
-                      key={i}
-                      className={`w-45 p-5 h-5 flex items-center justify-center rounded-full text-white text-sm ${
-                        r === "Cleared" ? "bg-green-600" : "bg-red-600"
-                      }`}
-                      title={`Round ${i + 1}: ${r}`}
-                    >
-                      Round {i + 1}: {r}
-                      {r === "Cleared" ? " ✔" : " ✖"}
-                    </span>
-                  ))}
-                </td>
-
-                {/* Status */}
-                <td className="px-6 py-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      a.status === "Selected"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {a.status}
-                  </span>
-                </td>
+        {!requested ? (
+          <div className="p-6 text-center text-slate-400">
+            Applicants will appear here after requesting from admin
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left">Name</th>
+                <th className="px-6 py-3 text-left">Branch</th>
+                <th className="px-6 py-3 text-left">CGPA</th>
+                <th className="px-6 py-3 text-left">Process Summary</th>
+                <th className="px-6 py-3 text-left">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredApplicants.map((a) => (
+                <tr key={a.id} className="border-t hover:bg-indigo-50">
+                  <td className="px-6 py-3 font-medium">{a.name}</td>
+                  <td className="px-6 py-3">{a.branch}</td>
+                  <td className="px-6 py-3 font-semibold">{a.cgpa}</td>
+
+                  {/* ROUNDS SUMMARY */}
+                  <td className="px-6 py-3 flex gap-2 flex-wrap">
+                    {a.rounds.map((r, i) => (
+                      <span
+                        key={i}
+                        className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
+                          r === "Cleared" ? "bg-green-600" : "bg-red-600"
+                        }`}
+                      >
+                        R{i + 1} {r === "Cleared" ? "✔" : "✖"}
+                      </span>
+                    ))}
+                  </td>
+
+                  {/* FINAL STATUS */}
+                  <td className="px-6 py-3">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        a.status === "Selected"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {a.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
 }
 
-/* ---------- Reusable Components ---------- */
+/* ---------- REUSABLE ---------- */
 
-function StatCard({ icon, label, value }) {
+function StatCard({ label, value, icon }) {
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center gap-4 hover:shadow-lg transition">
-      <div className="w-14 h-14 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+    <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center gap-4">
+      <div className="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
         {icon}
       </div>
       <div>
@@ -177,31 +188,30 @@ function TableHeader({ title }) {
   );
 }
 
-function StepBanner({ completed, message, buttonLabel, onClick, disabled }) {
-  const bannerColor = completed
-    ? "bg-green-50 border-green-200 text-green-800"
-    : "bg-yellow-50 border-yellow-200 text-yellow-800";
-  const Icon = completed ? CheckCircle : AlertCircle;
-
+function StepBanner({ completed, message, buttonLabel, onClick }) {
   return (
     <div
-      className={`rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border ${bannerColor}`}
+      className={`rounded-2xl p-4 flex items-center justify-between border ${
+        completed
+          ? "bg-green-50 border-green-200 text-green-800"
+          : "bg-yellow-50 border-yellow-200 text-yellow-800"
+      }`}
     >
-      <div className="flex items-start gap-3">
-        <Icon
-          className={`mt-0.5 ${completed ? "text-green-600" : "text-yellow-600"}`}
-        />
+      <div className="flex items-center gap-3">
+        {completed ? (
+          <CheckCircle className="text-green-600" />
+        ) : (
+          <AlertCircle className="text-yellow-600" />
+        )}
         <p className="text-sm">{message}</p>
       </div>
       <button
         onClick={onClick}
-        disabled={disabled}
-        className={`px-4 py-2 text-sm font-medium rounded-lg text-white transition ${
+        disabled={completed}
+        className={`px-4 py-2 text-sm font-medium rounded-lg text-white ${
           completed
-            ? "bg-green-600 hover:bg-green-700"
-            : disabled
-              ? "bg-yellow-400 cursor-not-allowed"
-              : "bg-yellow-600 hover:bg-yellow-700"
+            ? "bg-green-600 cursor-not-allowed"
+            : "bg-yellow-600 hover:bg-yellow-700"
         }`}
       >
         {completed ? "Completed" : buttonLabel}
