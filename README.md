@@ -106,7 +106,8 @@ Built using the **MERN Stack**, the platform ensures transparency, real-time upd
 
 
 # Clone the repository
-git clone https://github.com/your-username/placement-management-system.git
+git clone https://github.com/Mitesh076/Placement-portal.git
+
 
 # Navigate to frontend
 cd frontend
