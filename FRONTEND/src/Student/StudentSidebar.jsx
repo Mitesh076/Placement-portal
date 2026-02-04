@@ -29,15 +29,15 @@ export default function Sidebar() {
         {/* Menu */}
         <ul className="flex-1 px-3 py-4 space-y-1">
           <li>
-            <NavLink to="/students/profile" className={linkClass}>
-              <User size={18} />
-              Profile
+            <NavLink to="/students" end className={linkClass}>
+              <LayoutDashboard size={18} />
+              Student Dashboard
             </NavLink>
           </li>
           <li>
-            <NavLink to="/students/dashboard" className={linkClass}>
-              <LayoutDashboard size={18} />
-              Student Dashboard
+            <NavLink to="/students/profile" className={linkClass}>
+              <User size={18} />
+              Profile
             </NavLink>
           </li>
 

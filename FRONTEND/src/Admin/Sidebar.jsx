@@ -31,7 +31,7 @@ export default function Sidebar() {
         {/* Menu */}
         <ul className="flex-1 px-3 py-4 space-y-1">
           <li>
-            <NavLink to="/admin/dashboard" className={linkClass}>
+            <NavLink to="/admin" end className={linkClass}>
               <LayoutDashboard size={18} />
               Dashboard
             </NavLink>

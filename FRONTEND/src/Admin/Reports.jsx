@@ -11,7 +11,7 @@ import {
   Settings,
 } from "lucide-react";
 
-export default function AdminReportsPage() {
+export default function Reports() {
   return (
     <div className="h-screen w-screen flex bg-slate-100 text-sm overflow-hidden">
       {/* Main Content */}
