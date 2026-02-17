@@ -26,6 +26,7 @@ import ApplicantList from "./Companies/ApplicantList";
 import SelectedStudents from "./Companies/SelectedStudents";
 import InterviewRounds from "./Companies/InterviewRounds";
 import CompanySettings from "./Companies/CompanySettings";
+import AdminProfile from "./Admin/AdminProfile";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/admin" element={<Admin />}>
           <Route index element={<Dashboard />} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="users" element={<AllUsers />} />
           <Route path="students" element={<Students />} />
           <Route path="verification" element={<Verification />} />

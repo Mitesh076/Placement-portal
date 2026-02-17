@@ -1,13 +1,13 @@
 import { Camera } from "lucide-react";
 
-export default function StudentProfile() {
+export default function AdminProfile() {
   return (
     <div className="space-y-6 w-full m-6 overflow-y-scroll ">
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold">My Profile</h2>
         <p className="text-sm text-slate-500">
-          Complete your profile details for placement verification
+          Complete your profile details for placement Drives
         </p>
       </div>
 
@@ -33,22 +33,10 @@ export default function StudentProfile() {
         <h3 className="font-semibold mb-4">Personal Details</h3>
 
         <div className="grid md:grid-cols-3 gap-4">
-          <Input type="text" label="Full Name" placeholder="Enter full name" />
-          <Input
-            type="number"
-            label="Enrollment Number"
-            placeholder="University ID"
-          />
+          <Input label="Full Name" placeholder="Enter full name" />
           <Input label="Date of Birth" type="date" />
-          <Input
-            type="Select"
-            options=""
-            label="Gender"
-            placeholder="Male / Female / Other"
-          />
-          <Input label="Semester" placeholder="Select Semester" />
+          <Input label="Gender" placeholder="Male / Female / Other" />
           <Input label="Branch" placeholder="Computer Engineering" />
-          <Input type="number" label="CGPA" placeholder="8.5" />
         </div>
       </div>
 

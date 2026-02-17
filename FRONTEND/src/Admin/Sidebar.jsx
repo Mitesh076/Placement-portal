@@ -8,6 +8,7 @@ import {
   GraduationCap,
   CirclePlus,
   PlusSquareIcon,
+  User,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -34,6 +35,12 @@ export default function Sidebar() {
             <NavLink to="/admin" end className={linkClass}>
               <LayoutDashboard size={18} />
               Dashboard
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/admin/profile" className={linkClass}>
+              <User size={18} />
+              Profile
             </NavLink>
           </li>
 

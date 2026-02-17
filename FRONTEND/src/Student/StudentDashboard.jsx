@@ -26,14 +26,27 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-6 w-full p-5">
-      
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold">Student Dashboard</h2>
-        <p className="text-sm text-slate-500">
-          Overview of your placement activities
-        </p>
-      </div>
+      <header className="h-20 bg-white flex items-center justify-between px-6 border-b">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800">
+            Dashboard Overview
+          </h2>
+          <p className="text-xs text-slate-500">
+            Placement statistics & management
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-lg font-medium">Student Name</p>
+            <p className="text-md text-slate-500">Student</p>
+          </div>
+          <div className="w-15 h-15 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">
+            S
+          </div>
+        </div>
+      </header>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
