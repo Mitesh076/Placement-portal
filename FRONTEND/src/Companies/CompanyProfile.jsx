@@ -9,6 +9,7 @@ import {
   Layers,
   Save,
   Edit3,
+  Camera,
 } from "lucide-react";
 
 export default function CompanyProfile() {
@@ -63,6 +64,24 @@ export default function CompanyProfile() {
           {editMode ? <Save size={16} /> : <Edit3 size={16} />}
           {editMode ? "Save Changes" : "Edit Profile"}
         </button>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm flex items-center gap-6">
+        <div className="relative">
+          <div className="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
+            Profile Photo
+          </div>
+          <button className="absolute bottom-1 right-1 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700">
+            <Camera size={16} />
+          </button>
+        </div>
+
+        <div>
+          <h3 className="font-semibold">
+            Upload Profile Picture / Company Logo
+          </h3>
+          <p className="text-sm text-slate-500">JPG, PNG or JPEG (max 2MB)</p>
+        </div>
       </div>
 
       {/* Company Info */}

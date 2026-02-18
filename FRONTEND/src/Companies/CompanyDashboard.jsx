@@ -40,14 +40,34 @@ export default function CompanyDashboard() {
   return (
     <div className="space-y-6 w-full p-6">
       {/* Header */}
-      <div>
+      {/* <div>
         <h2 className="text-2xl font-bold text-indigo-700">
           Company Dashboard
         </h2>
         <p className="text-sm text-slate-500 mt-1">
           Manage verification and view selected students
         </p>
-      </div>
+      </div> */}
+      <header className="h-20 bg-white flex items-center justify-between px-6 border-b">
+        <div>
+          <h2 className="text-2xl font-bold text-indigo-700">
+            Company Dashboard
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage verification and view selected students
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium">Company Admin</p>
+            <p className="text-xs text-slate-500">HR</p>
+          </div>
+          <div className="w-15 h-15 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">
+            H
+          </div>
+        </div>
+      </header>
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -145,13 +165,7 @@ function TableHeader({ title }) {
   );
 }
 
-function StepBanner({
-  completed,
-  message,
-  buttonLabel,
-  onClick,
-  disabled,
-}) {
+function StepBanner({ completed, message, buttonLabel, onClick, disabled }) {
   return (
     <div
       className={`rounded-2xl p-4 flex items-center justify-between border ${

@@ -13,6 +13,11 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    adminid: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
 
     dob: {
       type: Date,
