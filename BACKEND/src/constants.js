@@ -1,1 +1,1 @@
-export const DB_NAME = "placementportal";
+export const DB_NAME = "PLACEMENT";
