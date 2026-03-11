@@ -33,6 +33,7 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login />} />
+
         <Route path="/admin" element={<Admin />}>
           <Route index element={<Dashboard />} />
           <Route path="profile" element={<AdminProfile />} />

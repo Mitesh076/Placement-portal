@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   GraduationCap,
   Building2,
@@ -10,7 +11,46 @@ import {
 } from "lucide-react";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("student");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, role }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const userrole = data.user.role;
+
+        // store token if needed
+        localStorage.setItem("token", data.token);
+
+        // role based navigation
+        if (userrole === "admin") {
+          navigate("/admin");
+        } else if (userrole === "student") {
+          navigate("/students");
+        } else if (userrole === "company") {
+          navigate("/company");
+        }
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const roles = {
     student: {
@@ -54,9 +94,11 @@ export default function Login() {
 
       {/* Hero Section */}
 
-      {/* <section className="bg-linear-to-r from-blue-600 to-indigo-700 text-white">
+      <section
+        id="features"
+        className="bg-linear-to-r from-blue-600 to-indigo-700 text-white"
+      >
         <div className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
-          
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-6">
               Centralized <br />
@@ -72,7 +114,6 @@ export default function Login() {
               transparency, efficiency, and better outcomes.
             </p>
 
-         
             <div className="flex flex-wrap gap-4">
               <button className="bg-yellow-400 text-blue-900 font-semibold px-6 py-3 rounded-lg hover:bg-yellow-300 transition">
                 Get Started
@@ -100,7 +141,7 @@ export default function Login() {
             </div>
           </div>
         </div>
-      </section> */}
+      </section>
 
       {/* Why Choose Us */}
       <section id="features" className="max-w-7xl mx-auto px-6 py-20">
@@ -160,11 +201,13 @@ export default function Login() {
           </div>
 
           {/* Login Form */}
-          <form className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
               <label className="text-sm font-medium">Email Address</label>
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                 placeholder="name@college.edu"
               />
@@ -173,6 +216,8 @@ export default function Login() {
               <label className="text-sm font-medium">Password</label>
               <input
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                 placeholder="Enter your password"
               />
