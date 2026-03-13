@@ -5,7 +5,7 @@ export default function AdminProfile() {
     <div className="space-y-6 w-full m-6 overflow-y-scroll ">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold">My Profile</h2>
+        <h2 className="text-xl font-semibold">Admin Profile</h2>
         <p className="text-sm text-slate-500">
           Complete your profile details for placement Drives
         </p>

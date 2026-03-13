@@ -38,10 +38,13 @@ export default function Login() {
 
         // role based navigation
         if (userrole === "admin") {
+          alert("Admin login successfull");
           navigate("/admin");
         } else if (userrole === "student") {
+          alert("Student login successfull");
           navigate("/students");
         } else if (userrole === "company") {
+          alert("Company login successfull");
           navigate("/company");
         }
       } else {
