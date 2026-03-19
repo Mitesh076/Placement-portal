@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import authroutes from "./routes/auth.routes.js";
+import adminroutes from "./routes/admin.routes.js";
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 app.use("/api/auth", authroutes);
+app.use("/api/admin", adminroutes);
 
 export { app };

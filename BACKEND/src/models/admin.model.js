@@ -13,16 +13,6 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    adminid: {
-      type: Number,
-      required: true,
-      unique: true,
-    },
-
-    dob: {
-      type: Date,
-      required: true,
-    },
 
     gender: {
       type: String,
@@ -35,54 +25,20 @@ const adminSchema = new mongoose.Schema(
       required: true,
     },
     email: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
       required: true,
+      unique: true,
     },
-    moblie: {
+    mobile: {
       type: Number,
       required: true,
       unique: true,
+      sparse: true,
       maxlength: 10,
-    },
-    altmoblie: {
-      type: Number,
-      maxlength: 10,
-      minlength: 10,
-    },
-
-    isActive: {
-      type: Boolean,
-      default: false,
-    },
-
-    addressline1: {
-      type: String,
-      required: true,
-    },
-    addressline2: {
-      type: String,
-      required: true,
-    },
-    city: {
-      type: String,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
-    },
-    pincode: {
-      type: Number,
-      required: true,
-      maxlength: 6,
-    },
-    country: {
-      type: String,
-      required: true,
     },
   },
   { timestamps: true },
 );
 
-export const Admin = mongoose.model("Admin", adminSchema);
+const Admin = mongoose.model("Admin", adminSchema);
+export default Admin;

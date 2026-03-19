@@ -1,102 +1,245 @@
+import { useState } from "react";
 import { Camera } from "lucide-react";
 
 export default function StudentProfile() {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [profileData, setProfileData] = useState({
+    fullName: "Student User",
+    erno: "123456789",
+    gender: "Male",
+    sem: 8,
+    department: "Computer Engineering",
+    cgpa: 8.77,
+    email: "Student@college.edu",
+    mobile: "+91 9876543210",
+  });
+
+  const [formData, setFormData] = useState(profileData);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSave = () => {
+    setProfileData(formData);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setFormData(profileData);
+    setIsEditing(false);
+  };
+
   return (
-    <div className="space-y-6 w-full m-6 overflow-y-scroll ">
+    <div className="w-full  mx-auto space-y-8 p-10 overflow-y-scroll">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold">My Profile</h2>
-        <p className="text-sm text-slate-500">
-          Complete your profile details for placement verification
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold">Student Profile</h2>
+          <p className="text-lg text-slate-500">
+            Complete your profile details for placement drives
+          </p>
+        </div>
+
+        {!isEditing ? (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-indigo-700"
+          >
+            Edit Profile
+          </button>
+        ) : (
+          <button
+            onClick={handleCancel}
+            className="bg-gray-500 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+          >
+            Cancel
+          </button>
+        )}
       </div>
 
-      {/* Profile Picture */}
-      <div className="bg-white p-6 rounded-xl shadow-sm flex items-center gap-6">
+      {/* Profile Card */}
+      <div className="bg-white p-10 rounded-2xl shadow flex items-center gap-10">
         <div className="relative">
-          <div className="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
-            Profile Photo
+          <div className="w-40 h-40 rounded-full bg-slate-200 flex items-center justify-center text-lg text-slate-500">
+            Photo
           </div>
-          <button className="absolute bottom-1 right-1 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700">
-            <Camera size={16} />
-          </button>
+
+          {isEditing && (
+            <button className="absolute bottom-2 right-2 bg-indigo-600 text-white p-3 rounded-full">
+              <Camera size={20} />
+            </button>
+          )}
         </div>
 
         <div>
-          <h3 className="font-semibold">Upload Profile Picture</h3>
-          <p className="text-sm text-slate-500">JPG, PNG or JPEG (max 2MB)</p>
+          <h3 className="text-2xl font-semibold">{profileData.fullName}</h3>
+          <p className="text-lg text-slate-500">{profileData.email}</p>
         </div>
       </div>
 
       {/* Personal Details */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="font-semibold mb-4">Personal Details</h3>
+      <div className="bg-white p-10 rounded-2xl shadow">
+        <h3 className="text-2xl font-semibold mb-6">Personal Details</h3>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <Input type="text" label="Full Name" placeholder="Enter full name" />
-          <Input
-            type="number"
-            label="Enrollment Number"
-            placeholder="University ID"
-          />
-          <Input label="Date of Birth" type="date" />
-          <Input
-            type="Select"
-            options=""
-            label="Gender"
-            placeholder="Male / Female / Other"
-          />
-          <Input label="Semester" placeholder="Select Semester" />
-          <Input label="Branch" placeholder="Computer Engineering" />
-          <Input type="number" label="CGPA" placeholder="8.5" />
-        </div>
+        {!isEditing ? (
+          <div className="grid md:grid-cols-3 gap-8 text-lg">
+            <Info label="Full Name" value={profileData.fullName} />
+            <Info label="Enrollment No " value={profileData.erno} />
+            <Info label="Gender" value={profileData.gender} />
+            <Info label="Semester" value={profileData.sem} />
+            <Info label="Department" value={profileData.department} />
+            <Info label="CGPA" value={profileData.cgpa} />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
+            <Input
+              label="Full Name"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+            />
+            <Input
+              label="Enrollment No"
+              name="erno"
+              value={formData.erno}
+              onChange={handleChange}
+            />
+
+            <Select
+              label="Gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              options={["Male", "Female", "Other"]}
+            />
+            <Select
+              label="Semester"
+              name="sem"
+              value={formData.sem}
+              onChange={handleChange}
+              options={[1, 2, 3, 4, 5, 6, 7, 8]}
+            />
+            <Input
+              label="CGPA"
+              name="cgpa"
+              value={formData.cgpa}
+              onChange={handleChange}
+            />
+
+            <Select
+              label="Department"
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              options={[
+                "Computer Engineering",
+                "Information Technology",
+                "Mechanical Engineering",
+                "Civil Engineering",
+                "Electrical Engineering",
+                "Electronics & Communication",
+                "Artificial Intelligence",
+                "Data Science",
+              ]}
+            />
+          </div>
+        )}
       </div>
 
       {/* Contact Information */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="font-semibold mb-4">Contact Information</h3>
+      <div className="bg-white p-10 rounded-2xl shadow">
+        <h3 className="text-2xl font-semibold mb-6">Contact Information</h3>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <Input label="Email Address" placeholder="name@college.edu" />
-          <Input label="Mobile Number" placeholder="+91 98765 43210" />
-          <Input label="Alternate Contact" placeholder="Optional" />
-        </div>
-      </div>
+        {!isEditing ? (
+          <div className="grid md:grid-cols-3 gap-8 text-lg">
+            <Info label="Email Address" value={profileData.email} />
+            <Info label="Mobile Number" value={profileData.mobile} />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
+            <Input
+              label="Email Address"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
 
-      {/* Address Details */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="font-semibold mb-4">Address Details</h3>
-
-        <div className="grid md:grid-cols-3 gap-4">
-          <Input label="Address Line 1" placeholder="Street / Area" />
-          <Input label="Address Line 2" placeholder="Landmark" />
-          <Input label="City" placeholder="Ahmedabad" />
-          <Input label="State" placeholder="Gujarat" />
-          <Input label="Pincode" placeholder="380001" />
-          <Input label="Country" placeholder="India" />
-        </div>
+            <Input
+              label="Mobile Number"
+              name="mobile"
+              value={formData.mobile}
+              onChange={handleChange}
+            />
+          </div>
+        )}
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end">
-        <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700">
-          Save Profile
-        </button>
-      </div>
+      {isEditing && (
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            className="bg-indigo-600 text-white px-10 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-700"
+          >
+            Save Profile
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ---------- REUSABLE INPUT ---------- */
-function Input({ label, placeholder, type = "text" }) {
+/* ---------- INPUT COMPONENT ---------- */
+
+function Input({ label, name, value, onChange, type = "text" }) {
   return (
     <div>
-      <label className="text-sm font-medium">{label}</label>
+      <label className="text-base font-medium">{label}</label>
       <input
         type={type}
-        placeholder={placeholder}
-        className="w-full mt-1 p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full mt-2 p-4 text-lg border rounded-xl focus:ring-2 focus:ring-indigo-500"
       />
+    </div>
+  );
+}
+
+/* ---------- SELECT COMPONENT ---------- */
+
+function Select({ label, name, value, onChange, options }) {
+  return (
+    <div>
+      <label className="text-base font-medium">{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full mt-2 p-4 text-lg border rounded-xl focus:ring-2 focus:ring-indigo-500"
+      >
+        {options.map((option, index) => (
+          <option key={index} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/* ---------- VIEW COMPONENT ---------- */
+
+function Info({ label, value }) {
+  return (
+    <div>
+      <p className="text-slate-500 text-sm">{label}</p>
+      <p className="font-semibold text-lg">{value}</p>
     </div>
   );
 }
