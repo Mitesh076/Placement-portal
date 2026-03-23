@@ -1,5 +1,5 @@
 import Admin from "../models/admin.model.js";
-import { uploadFile } from "../Services/storage.service.js";
+import { uploadFile } from "../Services/admin.storage.service.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 
@@ -27,6 +27,22 @@ async function adminProfile(req, res) {
     const { name, gender, branch, mobile, email } = req.body;
 
     const result = await uploadFile(file.buffer.toString("base64"));
+
+    const existingAdmin = await Admin.findOne({
+      $or: [{ email }, { mobile }],
+    });
+
+    if (existingAdmin) {
+      if (existingAdmin.email === email) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      if (existingAdmin.mobile === mobile) {
+        return res
+          .status(400)
+          .json({ message: "Mobile number already exists" });
+      }
+    }
 
     const admin = await Admin.create({
       profilepic: result.url,

@@ -7,7 +7,8 @@ const adminSchema = new mongoose.Schema(
       ref: "User",
     },
     profilepic: {
-      type: String, // cloudinary
+      type: String,
+      require: true, // cloudinary
     },
     name: {
       type: String,
@@ -33,7 +34,6 @@ const adminSchema = new mongoose.Schema(
       type: Number,
       required: true,
       unique: true,
-      sparse: true,
       maxlength: 10,
     },
   },

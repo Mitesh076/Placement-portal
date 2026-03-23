@@ -10,6 +10,7 @@ import {
   Save,
   Edit3,
   Camera,
+  Phone,
 } from "lucide-react";
 
 export default function CompanyProfile() {
@@ -22,6 +23,7 @@ export default function CompanyProfile() {
     location: "Bangalore, India",
     hrName: "John Doe",
     hrEmail: "hr@google.com",
+    mobile: "9876543210",
     description:
       "Google is a global technology company focusing on search, cloud computing, and AI-driven solutions.",
 
@@ -51,7 +53,7 @@ export default function CompanyProfile() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Company Profile</h2>
+          <h2 className="text-3xl font-semibold">Company Profile</h2>
           <p className="text-sm text-slate-500">
             Manage your company and placement drive details
           </p>
@@ -68,19 +70,19 @@ export default function CompanyProfile() {
 
       <div className="bg-white p-6 rounded-xl shadow-sm flex items-center gap-6">
         <div className="relative">
-          <div className="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
-            Profile Photo
+          <div className="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-lg">
+            Photo
           </div>
           <button className="absolute bottom-1 right-1 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700">
-            <Camera size={16} />
+            <Camera size={20} />
           </button>
         </div>
 
         <div>
-          <h3 className="font-semibold">
+          <h3 className="font-semibold text-2xl ">
             Upload Profile Picture / Company Logo
           </h3>
-          <p className="text-sm text-slate-500">JPG, PNG or JPEG (max 2MB)</p>
+          <p className="text-lg text-slate-500">JPG, PNG or JPEG (max 2MB)</p>
         </div>
       </div>
 
@@ -124,6 +126,13 @@ export default function CompanyProfile() {
           value={company.hrEmail}
           edit={editMode}
           onChange={(v) => handleChange("hrEmail", v)}
+        />
+        <Input
+          label="Contact"
+          icon={<Phone size={14} />}
+          value={company.mobile}
+          edit={editMode}
+          onChange={(v) => handleChange("mobile", v)}
         />
         <Textarea
           label="Company Description"
@@ -192,8 +201,8 @@ export default function CompanyProfile() {
       <Section title="Interview Process" icon={<Layers />}>
         <ul className="space-y-2">
           {company.rounds.map((round, index) => (
-            <li key={index} className="flex items-center gap-3 text-sm">
-              <span className="w-7 h-7 flex items-center justify-center rounded-full bg-indigo-600 text-white text-xs">
+            <li key={index} className="flex items-center gap-3 text-xl">
+              <span className="w-10 h-10 flex items-center  justify-center rounded-full bg-indigo-600 text-white text-2xl">
                 {index + 1}
               </span>
 
@@ -221,7 +230,7 @@ export default function CompanyProfile() {
                     );
                     handleChange("rounds", updatedRounds);
                   }}
-                  className="text-red-600 hover:text-red-800"
+                  className="mt-2 px-3 py-1 bg-red-600 text-2xl hover:bg-red-800  text-white rounded-lg"
                 >
                   Delete
                 </button>
@@ -236,7 +245,7 @@ export default function CompanyProfile() {
                 onClick={() =>
                   handleChange("rounds", [...company.rounds, "New Round"])
                 }
-                className="mt-2 px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
+                className="mt-2 px-3 py-1 bg-indigo-600 text-white text-2xl rounded-lg hover:bg-indigo-700"
               >
                 + Add Round
               </button>
@@ -253,7 +262,7 @@ export default function CompanyProfile() {
 function Section({ title, icon, children }) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-      <h3 className="font-semibold flex items-center gap-2">
+      <h3 className="font-bold text-2xl flex items-center gap-2">
         {icon} {title}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
@@ -264,7 +273,7 @@ function Section({ title, icon, children }) {
 function Input({ label, value, edit, onChange, icon, type = "text" }) {
   return (
     <div>
-      <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+      <p className="text-xl text-slate-500  mb-1 flex items-center gap-1">
         {icon} {label}
       </p>
       {edit ? (
@@ -275,7 +284,7 @@ function Input({ label, value, edit, onChange, icon, type = "text" }) {
           className="w-full border rounded-lg px-3 py-2"
         />
       ) : (
-        <p className="font-medium">{value}</p>
+        <p className="text-xl text-black ">{value}</p>
       )}
     </div>
   );
@@ -284,16 +293,16 @@ function Input({ label, value, edit, onChange, icon, type = "text" }) {
 function Textarea({ label, value, edit, onChange }) {
   return (
     <div className="md:col-span-2">
-      <p className="text-xs text-slate-500 mb-1">{label}</p>
+      <p className="text-xl text-slate-500  mb-1">{label}</p>
       {edit ? (
         <textarea
           rows={3}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
+          className="w-full border rounded-lg  px-3 py-2"
         />
       ) : (
-        <p className="font-medium">{value}</p>
+        <p className="text-xl text-black ">{value}</p>
       )}
     </div>
   );

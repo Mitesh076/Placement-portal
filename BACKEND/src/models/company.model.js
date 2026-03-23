@@ -6,11 +6,6 @@ const companySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    companyid: {
-      type: Number,
-      required: true,
-      unique: true,
-    },
     profilepic: {
       type: String, // cloudinary
       required: true,
@@ -38,13 +33,20 @@ const companySchema = new mongoose.Schema(
     hremail: {
       type: String,
       required: true,
+      unique: true,
     },
     description: {
       type: String,
       required: true,
     },
+    mobile: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
   },
   { timestamps: true },
 );
 
-export const Company = mongoose.model("Company", companySchema);
+const Company = mongoose.model("Company", companySchema);
+export default Company;

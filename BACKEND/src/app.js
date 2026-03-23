@@ -3,6 +3,8 @@ import cors from "cors";
 import express from "express";
 import authroutes from "./routes/auth.routes.js";
 import adminroutes from "./routes/admin.routes.js";
+import studentroutes from "./routes/student.routes.js";
+import companyroutes from "./routes/company.routes.js";
 
 const app = express();
 
@@ -20,5 +22,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authroutes);
 app.use("/api/admin", adminroutes);
+app.use("/api/student", studentroutes);
+app.use("/api/company", companyroutes);
 
 export { app };

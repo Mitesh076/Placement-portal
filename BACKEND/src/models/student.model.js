@@ -17,10 +17,7 @@ const studentSchema = new mongoose.Schema(
     erno: {
       type: Number,
       required: true,
-    },
-    dob: {
-      type: Date,
-      required: true,
+      uniuqe: true,
     },
 
     gender: {
@@ -43,52 +40,19 @@ const studentSchema = new mongoose.Schema(
       required: true,
     },
     email: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
+      uniuqe: true,
       required: true,
     },
     mobile: {
       type: Number,
+      uniuqe: true,
       required: true,
       maxlength: 10,
-      minlength: 10,
-    },
-    altmobile: {
-      type: Number,
-      maxlength: 10,
-      minlength: 10,
-    },
-    isActive: {
-      type: Boolean,
-      default: false,
-    },
-    addressline1: {
-      type: String,
-      required: true,
-    },
-    addressline2: {
-      type: String,
-      required: true,
-    },
-    city: {
-      type: String,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
-    },
-    pincode: {
-      type: Number,
-      required: true,
-      maxlength: 6,
-    },
-    country: {
-      type: String,
-      required: true,
     },
   },
   { timestamps: true },
 );
 
-export const Student = mongoose.model("Student", studentSchema);
+const Student = mongoose.model("Student", studentSchema);
+export default Student;

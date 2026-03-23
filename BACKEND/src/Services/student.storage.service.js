@@ -7,8 +7,8 @@ const ImageKitClient = new ImageKit({
 async function uploadFile(file) {
   const result = await ImageKitClient.files.upload({
     file,
-    fileName: "company" + Date.now(),
-    folder: "company-profile-pics",
+    fileName: "Student" + Date.now(),
+    folder: "Student-profile-pics",
   });
   return result;
 }
