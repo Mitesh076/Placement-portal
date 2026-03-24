@@ -9,7 +9,7 @@ const upload = multer({
 const router = express.Router();
 
 router.post(
-  "/Profile",
+  "/profile",
   upload.single("profilepic"),
   companycontroller.companyProfile,
 );

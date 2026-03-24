@@ -6,6 +6,7 @@ import {
   Clock,
   Layers,
   Trophy,
+  TicketCheck,
 } from "lucide-react";
 import Offers from "./Offers";
 
@@ -64,7 +65,15 @@ export default function PlacementStatus() {
         <SummaryCard label="Total Applied" value="3" icon={<Building2 />} />
         <SummaryCard label="Shortlisted" value="1" icon={<Clock />} />
         <SummaryCard label="Selected" value="1" icon={<Trophy />} />
-        <SummaryCard label="Rejected" value="1" icon={<XCircle />} />
+        <div className="bg-white rounded-xl shadow-sm p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-indigo-100 text-green-600 flex items-center justify-center">
+            {<CheckCircle />}
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Placement Status</p>
+            <p className="text-lg text-green-600 font-semibold">Placed</p>
+          </div>
+        </div>
       </div>
       <div>
         <Offers />
