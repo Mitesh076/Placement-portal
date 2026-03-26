@@ -25,6 +25,7 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email, password, role }),
       });
 
@@ -32,9 +33,6 @@ export default function Login() {
 
       if (res.ok) {
         const userrole = data.user.role;
-
-        // store token if needed
-        localStorage.setItem("token", data.token);
 
         // role based navigation
         if (userrole === "admin") {

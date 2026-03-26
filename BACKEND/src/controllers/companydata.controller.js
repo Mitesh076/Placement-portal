@@ -25,6 +25,7 @@ async function Cdata(req, res) {
 
     const compdata = await Companydata.create({
       user: decoded.id,
+      company: company._id, 
       verified,
       visited,
       completion,

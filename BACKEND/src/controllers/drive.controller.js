@@ -34,6 +34,7 @@ async function PDrive(req, res) {
 
     const dstatus = await Drive.create({
       user: decoded.id,
+      company: company._id,
       roles,
       pack,
       ebranches,
@@ -46,7 +47,7 @@ async function PDrive(req, res) {
 
     return res.status(201).json({
       message: "Drive Details Saved Successfully ",
-      pstatus: {
+      dstatus: {
         id: user._id,
         name: company.name,
         roles: dstatus.roles,

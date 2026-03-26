@@ -8,6 +8,11 @@ const companydataSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
     completion: {
       type: Number,
       required: true,

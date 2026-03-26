@@ -78,4 +78,44 @@ async function adminProfile(req, res) {
   }
 }
 
-export default { adminProfile };
+export const updateAdminProfile = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const admin = await Admin.findOne({ user: decoded.id });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const { name, gender, branch, mobile, email } = req.body;
+
+    let imageUrl = admin.profilepic;
+
+    // ✅ only update image if new file uploaded
+    if (req.file) {
+      const result = await uploadFile(req.file.buffer.toString("base64"));
+      imageUrl = result.url;
+    }
+
+    admin.name = name || admin.name;
+    admin.gender = gender || admin.gender;
+    admin.branch = branch || admin.branch;
+    admin.mobile = mobile || admin.mobile;
+    admin.email = email || admin.email;
+    admin.profilepic = imageUrl;
+
+    await admin.save();
+
+    res.json({
+      message: "Profile updated",
+      admin,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error updating profile" });
+  }
+};
+export default { adminProfile, updateAdminProfile };

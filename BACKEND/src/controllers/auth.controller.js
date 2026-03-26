@@ -33,7 +33,11 @@ async function registerUser(req, res) {
     process.env.JWT_SECRET,
   );
 
-  res.cookie("token", token);
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false, // ✅ MUST be false in localhost
+    sameSite: "lax", // ✅ VERY IMPORTANT
+  });
 
   res.status(201).json({
     message: "user registered successfully ",
@@ -74,7 +78,11 @@ async function loginUser(req, res) {
     process.env.JWT_SECRET,
   );
 
-  res.cookie("token", token);
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax", // ✅ FIXED
+  });
 
   res.status(200).json({
     message: "User logged in successfully ",
