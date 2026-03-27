@@ -81,7 +81,6 @@ async function adminProfile(req, res) {
 export const updateAdminProfile = async (req, res) => {
   try {
     const token = req.cookies.token;
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const admin = await Admin.findOne({ user: decoded.id });
@@ -91,13 +90,15 @@ export const updateAdminProfile = async (req, res) => {
     }
 
     const { name, gender, branch, mobile, email } = req.body;
+    const file = req.file;
 
+    // ✅ keep old image by default
     let imageUrl = admin.profilepic;
 
-    // ✅ only update image if new file uploaded
-    if (req.file) {
-      const result = await uploadFile(req.file.buffer.toString("base64"));
-      imageUrl = result.url;
+    // ✅ update only if new image uploaded
+    if (file) {
+      const result = await uploadFile(file.buffer.toString("base64"));
+      imageUrl = result;
     }
 
     admin.name = name || admin.name;
@@ -114,8 +115,40 @@ export const updateAdminProfile = async (req, res) => {
       admin,
     });
   } catch (error) {
-    console.log(error);
+    console.log("UPDATE ERROR:", error); // 👈 IMPORTANT
     res.status(500).json({ message: "Error updating profile" });
   }
 };
-export default { adminProfile, updateAdminProfile };
+
+export const updateProfileImage = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const admin = await Admin.findOne({ user: decoded.id });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Image required" });
+    }
+
+    const result = await uploadFile(req.file.buffer.toString("base64"));
+
+    // ✅ update only image
+    admin.profilepic = result.url;
+
+    await admin.save();
+
+    res.json({
+      message: "Image updated successfully",
+      admin,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error updating image" });
+  }
+};
+export default { adminProfile, updateAdminProfile, updateProfileImage };

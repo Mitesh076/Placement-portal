@@ -66,7 +66,7 @@ export default function AdminProfile() {
 
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/admin/profile",
+        "http://localhost:8000/api/upload/admin-profile",
         data,
         {
           withCredentials: true,
@@ -75,7 +75,7 @@ export default function AdminProfile() {
       );
 
       // 🔥 assuming backend returns URL
-      const imageUrl = res.data.profilepic;
+      const imageUrl = res.data.url;
 
       setFormData({
         ...formData,

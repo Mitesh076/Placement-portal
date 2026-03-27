@@ -1,10 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 
 export default function AllUsers() {
+  const [users, setUsers] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "Student",
+  });
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/api/admin/all");
+      setUsers(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleAddUser = async () => {
+    try {
+      await axios.post("http://localhost:8000/api/admin/add", formData);
+      setShowModal(false);
+      setFormData({ name: "", email: "", password: "", role: "Student" });
+      fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.message || "Error adding user");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/admin/delete/${id}`);
+      fetchUsers();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const filterUsers = (role) => {
+    return users.filter((u) => u.role === role);
+  };
+
   return (
     <div className="h-screen w-screen flex bg-slate-100 text-sm overflow-hidden">
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6 space-y-10">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -16,7 +63,10 @@ export default function AllUsers() {
               Manage Admins, Students, and Company users separately
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
             <Plus size={16} /> Add User
           </button>
         </div>
@@ -25,40 +75,98 @@ export default function AllUsers() {
           title="Admin Users"
           role="Admin"
           badgeClass="bg-purple-100 text-purple-700"
-          users={[
-            {
-              id: "ADM001",
-              name: "Placement Officer",
-              email: "admin@college.edu",
-            },
-          ]}
+          users={filterUsers("Admin")}
+          onDelete={handleDelete}
         />
 
         <UserTable
           title="Student Users"
           role="Student"
           badgeClass="bg-blue-100 text-blue-700"
-          users={[
-            { id: "STD101", name: "Rahul Sharma", email: "rahul@college.edu" },
-            { id: "STD102", name: "Priya Patel", email: "priya@college.edu" },
-          ]}
+          users={filterUsers("Student")}
+          onDelete={handleDelete}
         />
 
         <UserTable
           title="Company Users"
           role="Company"
           badgeClass="bg-green-100 text-green-700"
-          users={[
-            { id: "CMP501", name: "Infosys HR", email: "hr@infosys.com" },
-            { id: "CMP502", name: "TCS HR", email: "careers@tcs.com" },
-          ]}
+          users={filterUsers("Company")}
+          onDelete={handleDelete}
         />
       </main>
+
+      {/* ADD USER MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
+          <div className="bg-white w-96 p-6 rounded-xl shadow-lg space-y-4">
+            <h2 className="text-lg font-semibold">Add User</h2>
+
+            <input
+              type="text"
+              placeholder="Name"
+              className="w-full border p-2 rounded"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
+
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full border p-2 rounded"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full border p-2 rounded"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+            />
+
+            <select
+              className="w-full border p-2 rounded"
+              value={formData.role}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value })
+              }
+            >
+              <option>Admin</option>
+              <option>Student</option>
+              <option>Company</option>
+            </select>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddUser}
+                className="px-4 py-2 bg-indigo-600 text-white rounded"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function UserTable({ title, role, badgeClass, users }) {
+/* TABLE */
+function UserTable({ title, role, badgeClass, users, onDelete }) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="h-14 px-6 flex items-center border-b">
@@ -68,7 +176,7 @@ function UserTable({ title, role, badgeClass, users }) {
       <table className="w-full">
         <thead className="bg-slate-50 text-slate-600">
           <tr>
-            <th className="px-6 py-3 text-left">User ID</th>
+            <th className="px-6 py-3 text-left">User No</th>
             <th className="px-6 py-3 text-left">Name</th>
             <th className="px-6 py-3 text-left">Role</th>
             <th className="px-6 py-3 text-left">Email</th>
@@ -79,10 +187,11 @@ function UserTable({ title, role, badgeClass, users }) {
         <tbody>
           {users.map((user) => (
             <UserRow
-              key={user.id}
+              key={user._id}
               user={user}
               role={role}
               badgeClass={badgeClass}
+              onDelete={onDelete}
             />
           ))}
         </tbody>
@@ -91,13 +200,15 @@ function UserTable({ title, role, badgeClass, users }) {
   );
 }
 
-function UserRow({ user, role, badgeClass }) {
+/* ROW */
+function UserRow({ user, role, badgeClass, onDelete }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <tr className="border-t hover:bg-slate-50">
-      <td className="px-6 py-3 font-medium">{user.id}</td>
+      <td className="px-6 py-3 font-medium">{user.userNumber}</td>
       <td className="px-6 py-3">{user.name}</td>
+
       <td className="px-6 py-3">
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${badgeClass}`}
@@ -105,26 +216,30 @@ function UserRow({ user, role, badgeClass }) {
           {role}
         </span>
       </td>
+
       <td className="px-6 py-3">{user.email}</td>
+
       <td className="px-6 py-3">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs">
-            {showPassword ? "user@123" : "••••••••"}
+            {showPassword ? user.password : "••••••••"}
           </span>
-          <button
-            onClick={() => setShowPassword(!showPassword)}
-            className="text-slate-500 hover:text-slate-700"
-          >
+          <button onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
       </td>
+
       <td className="px-6 py-3 text-center">
         <div className="flex justify-center gap-3">
           <button className="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600">
             <Pencil size={16} />
           </button>
-          <button className="p-2 rounded-lg hover:bg-red-50 text-red-600">
+
+          <button
+            onClick={() => onDelete(user._id)}
+            className="p-2 rounded-lg hover:bg-red-50 text-red-600"
+          >
             <Trash2 size={16} />
           </button>
         </div>
