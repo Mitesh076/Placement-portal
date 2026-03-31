@@ -27,7 +27,7 @@ const companydataSchema = new mongoose.Schema(
 
     verified: {
       type: String,
-      enum: ["Verified", "Unverified", "Requested"],
+      enum: ["Verified", "Unverified"],
       default: "Unverified",
       required: true,
     },

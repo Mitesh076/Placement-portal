@@ -30,7 +30,7 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    hremail: {
+    email: {
       type: String,
       required: true,
       unique: true,

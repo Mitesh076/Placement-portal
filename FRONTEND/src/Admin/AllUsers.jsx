@@ -3,11 +3,13 @@ import axios from "axios";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 
 export default function AllUsers() {
-  const [users, setUsers] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
     role: "Student",
@@ -17,26 +19,55 @@ export default function AllUsers() {
     fetchUsers();
   }, []);
 
+  // ✅ FETCH USERS
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/admin/all");
-      setUsers(res.data);
+      const [adminRes, studentRes, companyRes] = await Promise.all([
+        axios.get("http://localhost:8000/api/admin/admins", {
+          withCredentials: true,
+        }),
+        axios.get("http://localhost:8000/api/admin/students", {
+          withCredentials: true,
+        }),
+        axios.get("http://localhost:8000/api/admin/companies", {
+          withCredentials: true,
+        }),
+      ]);
+
+      console.log("Admins 👉", adminRes.data);
+      console.log("Students 👉", studentRes.data);
+      console.log("Companies 👉", companyRes.data);
+
+      setAdmins(adminRes.data || []);
+      setStudents(studentRes.data || []);
+      setCompanies(companyRes.data || []);
     } catch (err) {
       console.log(err);
     }
   };
 
+  // ✅ FILTER USERS BY ROLE
+
+  // ✅ ADD USER
   const handleAddUser = async () => {
     try {
-      await axios.post("http://localhost:8000/api/admin/add", formData);
+      await axios.post("http://localhost:8000/api/auth/register", formData);
+
       setShowModal(false);
-      setFormData({ name: "", email: "", password: "", role: "Student" });
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        role: "Student",
+      });
+
       fetchUsers();
     } catch (err) {
       alert(err.response?.data?.message || "Error adding user");
     }
   };
 
+  // ✅ DELETE USER
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:8000/api/admin/delete/${id}`);
@@ -46,14 +77,10 @@ export default function AllUsers() {
     }
   };
 
-  const filterUsers = (role) => {
-    return users.filter((u) => u.role === role);
-  };
-
   return (
     <div className="h-screen w-screen flex bg-slate-100 text-sm overflow-hidden">
       <main className="flex-1 overflow-y-auto p-6 space-y-10">
-        {/* Header */}
+        {/* HEADER */}
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-slate-800">
@@ -63,6 +90,7 @@ export default function AllUsers() {
               Manage Admins, Students, and Company users separately
             </p>
           </div>
+
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
@@ -70,12 +98,11 @@ export default function AllUsers() {
             <Plus size={16} /> Add User
           </button>
         </div>
-
         <UserTable
           title="Admin Users"
           role="Admin"
           badgeClass="bg-purple-100 text-purple-700"
-          users={filterUsers("Admin")}
+          users={admins}
           onDelete={handleDelete}
         />
 
@@ -83,7 +110,7 @@ export default function AllUsers() {
           title="Student Users"
           role="Student"
           badgeClass="bg-blue-100 text-blue-700"
-          users={filterUsers("Student")}
+          users={students}
           onDelete={handleDelete}
         />
 
@@ -91,12 +118,12 @@ export default function AllUsers() {
           title="Company Users"
           role="Company"
           badgeClass="bg-green-100 text-green-700"
-          users={filterUsers("Company")}
+          users={companies}
           onDelete={handleDelete}
         />
       </main>
 
-      {/* ADD USER MODAL */}
+      {/* ✅ ADD USER MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
           <div className="bg-white w-96 p-6 rounded-xl shadow-lg space-y-4">
@@ -139,9 +166,9 @@ export default function AllUsers() {
                 setFormData({ ...formData, role: e.target.value })
               }
             >
-              <option>Admin</option>
-              <option>Student</option>
-              <option>Company</option>
+              <option value="admin">Admin</option>
+              <option value="student">Student</option>
+              <option value="company">Company</option>
             </select>
 
             <div className="flex justify-end gap-3">
@@ -151,6 +178,7 @@ export default function AllUsers() {
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleAddUser}
                 className="px-4 py-2 bg-indigo-600 text-white rounded"
@@ -165,7 +193,8 @@ export default function AllUsers() {
   );
 }
 
-/* TABLE */
+/* ================= TABLE ================= */
+
 function UserTable({ title, role, badgeClass, users, onDelete }) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -176,14 +205,13 @@ function UserTable({ title, role, badgeClass, users, onDelete }) {
       <table className="w-full">
         <thead className="bg-slate-50 text-slate-600">
           <tr>
-            <th className="px-6 py-3 text-left">User No</th>
             <th className="px-6 py-3 text-left">Name</th>
             <th className="px-6 py-3 text-left">Role</th>
             <th className="px-6 py-3 text-left">Email</th>
-            <th className="px-6 py-3 text-left">Password</th>
             <th className="px-6 py-3 text-center">Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {users.map((user) => (
             <UserRow
@@ -200,13 +228,13 @@ function UserTable({ title, role, badgeClass, users, onDelete }) {
   );
 }
 
-/* ROW */
+/* ================= ROW ================= */
+
 function UserRow({ user, role, badgeClass, onDelete }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <tr className="border-t hover:bg-slate-50">
-      <td className="px-6 py-3 font-medium">{user.userNumber}</td>
       <td className="px-6 py-3">{user.name}</td>
 
       <td className="px-6 py-3">
@@ -219,23 +247,8 @@ function UserRow({ user, role, badgeClass, onDelete }) {
 
       <td className="px-6 py-3">{user.email}</td>
 
-      <td className="px-6 py-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs">
-            {showPassword ? user.password : "••••••••"}
-          </span>
-          <button onClick={() => setShowPassword(!showPassword)}>
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
-      </td>
-
       <td className="px-6 py-3 text-center">
         <div className="flex justify-center gap-3">
-          <button className="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600">
-            <Pencil size={16} />
-          </button>
-
           <button
             onClick={() => onDelete(user._id)}
             className="p-2 rounded-lg hover:bg-red-50 text-red-600"

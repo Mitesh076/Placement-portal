@@ -1,25 +1,39 @@
-import {
-  CheckCircle,
-  XCircle,
-  Plus,
-  Pencil,
-  Trash2,
-  Eye,
-  EyeOff,
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  Building2,
-  PlusCircle,
-  BarChart3,
-  UserCheck,
-  Settings,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle, XCircle } from "lucide-react";
+import axios from "axios";
 
 export default function Students() {
+  const [students, setStudents] = useState([]);
+
+  // ✅ Fetch from backend
+  const fetchStudents = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/api/admin/placed");
+      setStudents(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  // ✅ Toggle placement status
+  const toggleStatus = async (id) => {
+    try {
+      await axios.put(`http://localhost:8000/api/admin/${id}/toggle`);
+      fetchStudents(); // refresh UI
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const placedStudents = students.filter((s) => s.placed);
+  const unplacedStudents = students.filter((s) => !s.placed);
+
   return (
     <div className="h-screen w-screen flex bg-slate-100 text-sm overflow-hidden">
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6 space-y-10">
         {/* Header */}
         <div>
@@ -31,28 +45,30 @@ export default function Students() {
           </p>
         </div>
 
-        {/* All Students Table */}
-        <StudentTable title="All Students" students={allStudents} />
+        {/* Tables */}
+        <StudentTable
+          title="All Students"
+          students={students}
+          toggleStatus={toggleStatus}
+        />
 
-        {/* Placed Students */}
         <StudentTable
           title="Placed Students"
           students={placedStudents}
-          status="placed"
+          toggleStatus={toggleStatus}
         />
 
-        {/* Unplaced Students */}
         <StudentTable
           title="Unplaced Students"
           students={unplacedStudents}
-          status="unplaced"
+          toggleStatus={toggleStatus}
         />
       </main>
     </div>
   );
 }
 
-function StudentTable({ title, students, status }) {
+function StudentTable({ title, students, toggleStatus }) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="h-14 px-6 flex items-center justify-between border-b">
@@ -63,7 +79,6 @@ function StudentTable({ title, students, status }) {
       <table className="w-full">
         <thead className="bg-slate-50 text-slate-600">
           <tr>
-            <th className="px-6 py-3 text-left">Student ID</th>
             <th className="px-6 py-3 text-left">Name</th>
             <th className="px-6 py-3 text-left">Department</th>
             <th className="px-6 py-3 text-left">Companies Appeared</th>
@@ -71,17 +86,20 @@ function StudentTable({ title, students, status }) {
             <th className="px-6 py-3 text-left">Toggle Status</th>
           </tr>
         </thead>
+
         <tbody>
           {students.map((student) => (
-            <tr key={student.id} className="border-t hover:bg-slate-50">
-              <td className="px-6 py-3 font-medium">{student.id}</td>
+            <tr key={student._id} className="border-t hover:bg-slate-50">
               <td className="px-6 py-3">{student.name}</td>
-              <td className="px-6 py-3">{student.department}</td>
+
+              <td className="px-6 py-3">{student.branch}</td>
+
               <td className="px-6 py-3">
                 <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
-                  {student.appliedCount}
+                  {student.applied}
                 </span>
               </td>
+
               <td className="px-6 py-3">
                 {student.placed ? (
                   <span className="flex items-center gap-2 text-green-600">
@@ -95,15 +113,16 @@ function StudentTable({ title, students, status }) {
               </td>
 
               <td className="px-6 py-3">
-                {student.placed ? (
-                  <button className="px-3 py-1 rounded-lg text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200">
-                    Mark Unplaced
-                  </button>
-                ) : (
-                  <button className="px-3 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-600 hover:bg-green-200">
-                    Mark Placed
-                  </button>
-                )}
+                <button
+                  onClick={() => toggleStatus(student._id)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                    student.placed
+                      ? "bg-red-100 text-red-600"
+                      : "bg-green-100 text-green-600"
+                  }`}
+                >
+                  {student.placed ? "Mark Unplaced" : "Mark Placed"}
+                </button>
               </td>
             </tr>
           ))}
@@ -112,34 +131,3 @@ function StudentTable({ title, students, status }) {
     </div>
   );
 }
-
-// Dummy UI Data
-const allStudents = [
-  {
-    id: "STD101",
-    name: "Rahul Sharma",
-    department: "CSE",
-    appliedCount: 5,
-    placed: false,
-    onoff: false,
-  },
-  {
-    id: "STD102",
-    name: "Priya Patel",
-    department: "IT",
-    appliedCount: 3,
-    placed: true,
-    onoff: false,
-  },
-  {
-    id: "STD103",
-    name: "Amit Verma",
-    department: "ECE",
-    appliedCount: 4,
-    placed: true,
-    onoff: true,
-  },
-];
-
-const placedStudents = allStudents.filter((s) => s.placed);
-const unplacedStudents = allStudents.filter((s) => !s.placed);

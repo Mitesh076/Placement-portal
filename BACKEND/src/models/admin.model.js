@@ -8,7 +8,7 @@ const adminSchema = new mongoose.Schema(
     },
     profilepic: {
       type: String,
-      require: true, // cloudinary
+      required: true, // cloudinary
     },
     name: {
       type: String,

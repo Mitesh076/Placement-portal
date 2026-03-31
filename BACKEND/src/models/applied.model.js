@@ -12,7 +12,7 @@ const appliedSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      require: true, // cloudinary
+      required: true, // cloudinary
     },
     appliedon: {
       type: Date,
@@ -20,19 +20,19 @@ const appliedSchema = new mongoose.Schema(
     },
     nextroundon: {
       type: Date,
-      require: true, // cloudinary
+      required: true, // cloudinary
     },
     round: {
       type: String,
-      require: true, // cloudinary
+      required: true, // cloudinary
     },
     nextround: {
       type: String,
-      require: true, // cloudinary
+      required: true, // cloudinary
     },
     progress: {
       type: Number,
-      require: true, // cloudinary
+      required: true, // cloudinary
     },
 
     status: {

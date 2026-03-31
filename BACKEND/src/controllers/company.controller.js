@@ -2,6 +2,7 @@ import Company from "../models/company.model.js";
 import { uploadFile } from "../Services/company.storage.service.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import CompanyData from "../models/companydata.model.js";
 
 async function companyProfile(req, res) {
   const token = req.cookies.token;
@@ -93,5 +94,65 @@ async function companyProfile(req, res) {
     return res.status(500).json({ message: "Something went wrong" });
   }
 }
+
+// ✅ GET ALL COMPANIES FOR VERIFICATION
+export const getVerificationCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find();
+    const verifications = await CompanyData.find();
+
+    // 🔥 Map for fast lookup
+    const verificationMap = {};
+    verifications.forEach((v) => {
+      verificationMap[v.company?.toString()] = v;
+    });
+
+    const merged = companies.map((company) => {
+      const verification = verificationMap[company._id.toString()];
+
+      return {
+        _id: company._id,
+        companyId: company.companyId || company._id,
+        name: company.name,
+        industry: company.industry,
+        location: company.location,
+
+        // ✅ IMPORTANT FIX
+        status: verification?.verified === "Verified" ? "Verified" : "Unverified",
+      };
+    });
+
+    console.log("Companies:", verifications);
+    res.status(200).json(merged);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateCompanyVerification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    let record = await CompanyData.findOne({ company: id });
+
+    if (!record) {
+      // create if not exists
+      record = new CompanyData({
+        company: id,
+        status,
+      });
+    } else {
+      record.status = status;
+    }
+
+    await record.save();
+
+    res.json({ message: "Company status updated", record });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 export default { companyProfile };

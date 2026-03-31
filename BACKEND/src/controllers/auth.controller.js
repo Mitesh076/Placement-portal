@@ -95,33 +95,6 @@ export const loginUser = async (req, res) => {
   });
 };
 
-export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const deletedUser = await User.findByIdAndDelete(id);
-
-    if (!deletedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      message: "User deleted successfully",
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
 // GET ALL USERS (for your UI tables)
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find().sort({ userNumber: 1 });
 
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export default { registerUser, loginUser, deleteUser, getAllUsers };
+export default { registerUser, loginUser };

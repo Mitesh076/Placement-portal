@@ -17,7 +17,7 @@ const studentSchema = new mongoose.Schema(
     erno: {
       type: Number,
       required: true,
-      uniuqe: true,
+      uniqe: true,
     },
 
     gender: {
@@ -41,12 +41,12 @@ const studentSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      uniuqe: true,
+      uniqe: true,
       required: true,
     },
     mobile: {
       type: Number,
-      uniuqe: true,
+      uniqe: true,
       required: true,
       maxlength: 10,
     },

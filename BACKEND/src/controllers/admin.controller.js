@@ -2,6 +2,8 @@ import Admin from "../models/admin.model.js";
 import { uploadFile } from "../Services/admin.storage.service.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import Student from "../models/student.model.js";
+import Company from "../models/company.model.js";
 
 async function adminProfile(req, res) {
   const token = req.cookies.token;
@@ -151,4 +153,82 @@ export const updateProfileImage = async (req, res) => {
     res.status(500).json({ message: "Error updating image" });
   }
 };
-export default { adminProfile, updateAdminProfile, updateProfileImage };
+
+export const createUser = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    // 1. Create user
+    const user = await User.create({ name, email, password, role });
+
+    res.status(201).json({ message: "User created successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Delete role-specific data
+    if (user.role === "student") {
+      await Student.findOneAndDelete({ user: id });
+    }
+
+    if (user.role === "admin") {
+      await Admin.findOneAndDelete({ user: id });
+    }
+
+    if (user.role === "company") {
+      await Company.findOneAndDelete({ user: id });
+    }
+
+    // Delete main user
+    await User.findByIdAndDelete(id);
+
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getStudents = async (req, res) => {
+  const students = await Student.find().populate("user", "name email");
+
+  res.json(students);
+};
+
+export const getAdmins = async (req, res) => {
+  const admins = await Admin.find().populate("user", "name email");
+
+  res.json(admins);
+};
+
+export const getCompanies = async (req, res) => {
+  const companies = await Company.find().populate("user", "name email");
+
+  res.json(companies);
+};
+
+export const getAllUsers = async (req, res) => {
+  const users = await User.find();
+
+  res.json(users);
+};
+
+export default {
+  adminProfile,
+  updateAdminProfile,
+  updateProfileImage,
+  createUser,
+  deleteUser,
+  getStudents,
+  getAdmins,
+  getAllUsers,
+  getCompanies,
+};

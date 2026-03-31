@@ -72,12 +72,12 @@ export default function Sidebar() {
             </NavLink>
           </li>
 
-          <li>
+          {/* <li>
             <NavLink to="/admin/addcompany" className={linkClass}>
               <CirclePlus size={18} />
               Add Companies
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink to="/admin/postcompany" className={linkClass}>
               <PlusSquareIcon size={18} />

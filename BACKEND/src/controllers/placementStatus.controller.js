@@ -58,4 +58,22 @@ async function PStatus(req, res) {
   }
 }
 
+export const togglePlacement = async (req, res) => {
+  try {
+    const record = await PlacementStatus.findById(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    record.status = record.status === "Placed" ? "Unplaced" : "Placed";
+
+    await record.save();
+
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export default { PStatus };
