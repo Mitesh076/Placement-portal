@@ -13,7 +13,7 @@ export const getDashboardStats = async (req, res) => {
     const placedStudents = await PlacementStatus.countDocuments({
       status: "Placed",
     });
-    const activeDrives = await CompanyData.countDocuments({ visited: "No" });
+    const activeDrives = await CompanyData.countDocuments({ visited: false });
 
     res.status(200).json({
       totalStudents,
@@ -37,12 +37,13 @@ export const getRecentDrives = async (req, res) => {
     // Merge visited status
     const finalData = drives.map((drive) => {
       const data = companyData.find(
-        (c) => c.company.toString() === drive.company._id.toString(),
+        (c) => c.company.toString() === drive.company?._id.toString(),
       );
+      console.log(drives);
 
       return {
         ...drive.toObject(),
-        visited: data ? data.visited : "No",
+        visited: data ? data.visited : false, //
       };
     });
 
@@ -51,8 +52,6 @@ export const getRecentDrives = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// controller (adminController.js)
 
 export const getAdminProfile = async (req, res) => {
   try {
@@ -84,4 +83,57 @@ export const getAdminProfile = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-export default { getDashboardStats, getRecentDrives, getAdminProfile };
+
+export const getCompanyStats = async (req, res) => {
+  try {
+    const totalCompanies = await Company.countDocuments();
+    const companyvisited = await CompanyData.countDocuments({
+      visited: true,
+    });
+    const companyNotVisited = await CompanyData.countDocuments({
+      visited: false,
+    });
+
+    res.status(200).json({
+      totalCompanies,
+      companyvisited,
+      companyNotVisited,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getCompanyDrives = async (req, res) => {
+  try {
+    const drives = await Drive.find()
+      .populate("company")
+      .sort({ createdAt: -1 });
+
+    const companyData = await CompanyData.find();
+
+    // Merge visited status
+    const finalData = drives.map((drive) => {
+      const data = companyData.find(
+        (c) => c.company.toString() === drive.company?._id.toString(),
+      );
+      console.log(drives);
+
+      return {
+        ...drive.toObject(),
+        visited: data ? data.visited : "NO",
+      };
+    });
+
+    res.json(finalData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export default {
+  getDashboardStats,
+  getDashboardStats,
+  getRecentDrives,
+  getAdminProfile,
+};

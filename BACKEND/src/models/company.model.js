@@ -44,6 +44,14 @@ const companySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    sappeared: {
+      type: Number,
+      required: true,
+    },
+    splaced: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 );

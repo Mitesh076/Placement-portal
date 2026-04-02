@@ -11,6 +11,7 @@ import {
 import {
   getVerificationCompanies,
   updateCompanyVerification,
+  getVisitedCompanies,
 } from "../controllers/company.controller.js";
 
 import { togglePlacement } from "../controllers/placementStatus.controller.js";
@@ -18,6 +19,7 @@ import {
   getDashboardStats,
   getRecentDrives,
   getAdminProfile,
+  getCompanyStats,
 } from "../controllers/admindash.controller.js";
 
 import {
@@ -45,6 +47,7 @@ router.put(
   upload.single("profilepic"), // same name as frontend
   admincontrollers.updateAdminProfile,
 );
+
 router.get("/stats", getDashboardStats);
 router.get("/drives", getRecentDrives);
 router.get("/profile", protect, getAdminProfile);
@@ -65,5 +68,8 @@ router.put("/sverification/:id", updateVerificationStatus);
 
 router.get("/cverified", getVerificationCompanies);
 router.put("/cverification/:id", updateCompanyVerification);
+
+router.get("/compstats", getCompanyStats);
+router.get("/visitedstats", getVisitedCompanies);
 
 export default router;

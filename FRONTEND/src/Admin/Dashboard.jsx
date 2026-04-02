@@ -130,13 +130,13 @@ export default function Dashboard() {
                     <td className="px-6 py-4">₹{drive.pack} LPA</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                          drive.company?.visited === "No"
+                        className={`px-4 py-2 rounded-full text-md font-semibold ${
+                          drive.visited
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
                         }`}
                       >
-                        {drive.visited}
+                        {drive.visited ? "Yes" : "No"}
                       </span>
                     </td>
                   </tr>

@@ -3,6 +3,7 @@ import { uploadFile } from "../Services/company.storage.service.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import CompanyData from "../models/companydata.model.js";
+import Drive from "../models/drive.model.js";
 
 async function companyProfile(req, res) {
   const token = req.cookies.token;
@@ -32,12 +33,14 @@ async function companyProfile(req, res) {
       location,
       hrname,
       description,
-      hremail,
+      email,
       mobile,
+      sappeared,
+      splaced,
     } = req.body;
 
     // Check duplicate email
-    const existingEmail = await Company.findOne({ hremail });
+    const existingEmail = await Company.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({
         message: "Email already exists",
@@ -64,7 +67,9 @@ async function companyProfile(req, res) {
       hrname,
       description,
       mobile,
-      hremail: hremail || user.email,
+      sappeared,
+      splaced,
+      email: email || user.email,
     });
 
     return res.status(201).json({
@@ -80,7 +85,9 @@ async function companyProfile(req, res) {
         hrname: company.hrname,
         description: company.description,
         mobile: company.mobile,
-        hremail: company.hremail,
+        sappeared: company.sappeared,
+        splaced: company.splaced,
+        email: company.email,
       },
     });
   } catch (error) {
@@ -118,7 +125,8 @@ export const getVerificationCompanies = async (req, res) => {
         location: company.location,
 
         // ✅ IMPORTANT FIX
-        status: verification?.verified === "Verified" ? "Verified" : "Unverified",
+        status:
+          verification?.verified === "Verified" ? "Verified" : "Unverified",
       };
     });
 
@@ -155,4 +163,43 @@ export const updateCompanyVerification = async (req, res) => {
   }
 };
 
-export default { companyProfile };
+export const getVisitedCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find();
+    const visited = await CompanyData.find();
+    const packdata = await Drive.find();
+
+    // 🔥 Map for fast lookup
+    const visitedMap = {};
+    visited.forEach((v) => {
+      visitedMap[v.company?.toString()] = v;
+    });
+    const packMap = {};
+    packdata.forEach((p) => {
+      packMap[p.company?.toString()] = p;
+    });
+
+    const merged = companies.map((company) => {
+      const Visited = visitedMap[company._id.toString()];
+      const packdata = packMap[company._id.toString()];
+
+      return {
+        _id: company._id,
+        name: company.name,
+        location: company.location,
+        pack: packdata?.pack || null,
+        sappeared: company.sappeared,
+        splaced: company.splaced,
+        visited: Visited.visited,
+      };
+    });
+
+    console.log("Companies:", merged);
+    res.status(200).json(merged);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export default { companyProfile, getVisitedCompanies };

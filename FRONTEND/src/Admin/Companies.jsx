@@ -5,8 +5,48 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
+import axios from "axios";
+import { useState } from "react";
+import { useEffect } from "react";
 
 export default function Companies() {
+  const [stats, setStats] = useState({});
+  const [companies, setCompanies] = useState([]);
+
+  const fetchCompanies = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/admin/visitedstats");
+      const data = await res.json();
+      setCompanies(data.data || data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  useEffect(() => {
+    fetchDashboardData();
+    fetchCompanies();
+  }, []);
+
+  const visitedCompanies = Array.isArray(companies)
+    ? companies.filter((c) => c.visited === true)
+    : [];
+
+  const notvisitedCompanies = Array.isArray(companies)
+    ? companies.filter((c) => c.visited === false)
+    : [];
+
+  const fetchDashboardData = async () => {
+    try {
+      const statsRes = await axios.get(
+        "http://localhost:8000/api/admin/compstats",
+      );
+
+      setStats(statsRes.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="h-screen w-screen flex bg-slate-100 text-sm overflow-hidden">
       {/* Main Content */}
@@ -24,15 +64,19 @@ export default function Companies() {
         {/* Stats Cards */}
         <div className="flex items-center justify-between">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard title="Total Companies" value="8" icon={<Users />} />
+            <StatCard
+              title="Total Companies"
+              value={stats.totalCompanies}
+              icon={<Users />}
+            />
             <StatCard
               title="Visited Companies"
-              value="5"
+              value={stats.companyvisited}
               icon={<CheckCircle />}
             />
             <StatCard
               title="Upcoming Companies"
-              value="3"
+              value={stats.companyNotVisited}
               icon={<CalendarDays />}
             />
           </div>
@@ -48,7 +92,7 @@ export default function Companies() {
         {/* Upcoming Companies */}
         <CompanyTable
           title="Upcoming / Not Visited Companies"
-          companies={upcomingCompanies}
+          companies={notvisitedCompanies}
         />
       </main>
     </div>
@@ -90,7 +134,6 @@ function CompanyTable({ title, companies, visited }) {
       <table className="w-full">
         <thead className="bg-slate-50 text-slate-600">
           <tr>
-            <th className="px-6 py-3 text-left">Company ID</th>
             <th className="px-6 py-3 text-left">Company Name</th>
             <th className="px-6 py-3 text-left">Location</th>
             <th className="px-6 py-3 text-left">Package</th>
@@ -99,80 +142,51 @@ function CompanyTable({ title, companies, visited }) {
             <th className="px-6 py-3 text-left">Status</th>
           </tr>
         </thead>
+
         <tbody>
-          {companies.map((company) => (
-            <tr key={company.id} className="border-t hover:bg-slate-50">
-              <td className="px-6 py-3 font-medium">{company.id}</td>
-              <td className="px-6 py-3">{company.name}</td>
-              <td className="px-6 py-3 flex items-center gap-1">
-                <MapPin size={14} /> {company.location}
-              </td>
-              <td className="px-6 py-3">{company.package}</td>
-              <td className="px-6 py-3">
-                <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
-                  {company.studentsAppeared}
-                </span>
-              </td>
-              <td className="px-6 py-3">
-                <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
-                  {company.placedStudents}
-                </span>
-              </td>
-              <td className="px-6 py-3">
-                {visited ? (
-                  <span className="flex items-center gap-2 text-green-600">
-                    <CheckCircle size={16} /> Visited
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2 text-orange-600">
-                    <XCircle size={16} /> Upcoming
-                  </span>
-                )}
+          {companies.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="text-center py-4 text-slate-500">
+                No data found
               </td>
             </tr>
-          ))}
+          ) : (
+            companies.map((company) => (
+              <tr
+                key={company._id.toString()}
+                className="border-t hover:bg-slate-50"
+              >
+                <td className="px-6 py-3">{company.name}</td>
+                <td className="px-6 py-3 flex items-center gap-1">
+                  <MapPin size={14} /> {company.location}
+                </td>
+                <td className="px-6 py-3">{company.pack}</td>
+                <td className="px-6 py-3">
+                  <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                    {company.sappeared}
+                  </span>
+                </td>
+                <td className="px-6 py-3">
+                  <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
+                    {company.splaced}
+                  </span>
+                </td>
+                <td className="px-6 py-3">
+                  {company.visited ? (
+                    <span className="flex items-center gap-2 text-green-600">
+                      <CheckCircle size={16} /> Visited
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-orange-600">
+                      <XCircle size={16} /> Upcoming
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
   );
 }
-
-/* ==========================
-   UI-ONLY DUMMY DATA
-========================== */
-
-const visitedCompanies = [
-  {
-    id: "CMP101",
-    name: "TCS",
-    location: "Mumbai",
-    package: "7 LPA",
-    studentsAppeared: 120,
-    placedStudents: 38,
-  },
-  {
-    id: "CMP102",
-    name: "Infosys",
-    location: "Pune",
-    package: "6.5 LPA",
-    studentsAppeared: 95,
-    placedStudents: 27,
-  },
-];
-
-const upcomingCompanies = [
-  {
-    id: "CMP201",
-    name: "Google",
-    location: "Bangalore",
-    package: "25 LPA",
-    studentsAppeared: "—",
-  },
-  {
-    id: "CMP202",
-    name: "Amazon",
-    location: "Hyderabad",
-    package: "18 LPA",
-    studentsAppeared: "—",
-  },
-];

@@ -19,9 +19,8 @@ const companydataSchema = new mongoose.Schema(
     },
 
     visited: {
-      type: String,
-      enum: ["Yes", "No"],
-      default: "No",
+      type: Boolean,
+      default: false,
       required: true,
     },
 
