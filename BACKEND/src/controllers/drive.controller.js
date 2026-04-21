@@ -72,4 +72,37 @@ async function PDrive(req, res) {
   }
 }
 
-export default { PDrive };
+export const createDrive = async (req, res) => {
+  try {
+    const {
+      companyId,
+      roles,
+      pack,
+      ebranches,
+      drivedate,
+      jobtype,
+      mincgpa,
+      bond,
+      lastdate,
+    } = req.body;
+
+    const drive = await Drive.create({
+      user: req.user._id, // from auth middleware
+      company: companyId,
+      roles,
+      pack,
+      ebranches,
+      drivedate,
+      jobtype,
+      mincgpa,
+      bond,
+      lastdate,
+    });
+
+    res.status(201).json(drive);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export default { PDrive, createDrive };

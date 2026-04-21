@@ -50,6 +50,9 @@ const studentSchema = new mongoose.Schema(
       required: true,
       maxlength: 10,
     },
+    batch: {
+      type: Number,
+    },
   },
   { timestamps: true },
 );

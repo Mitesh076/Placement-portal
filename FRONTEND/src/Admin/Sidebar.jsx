@@ -92,12 +92,12 @@ export default function Sidebar() {
             </NavLink>
           </li>
 
-          <li>
+          {/* <li>
             <NavLink to="/admin/settings" className={linkClass}>
               <Settings size={18} />
               Settings
             </NavLink>
-          </li>
+          </li> */}
         </ul>
 
         {/* Footer */}

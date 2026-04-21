@@ -21,14 +21,26 @@ async function PStatus(req, res) {
         .json({ message: "You dont have access to use the Student profile " });
     }
 
-    const { status, verified, eligible, applied, total, completion } = req.body;
+    const {
+      status,
+      verified,
+      pack,
+      pcname,
+      eligible,
+      applied,
+      total,
+      completion,
+    } = req.body;
 
     const pstatus = await PlacementStatus.create({
       user: decoded.id,
+      student: student.id,
       status,
       verified,
       eligible,
       applied,
+      pack,
+      pcname,
       total,
       completion,
     });
@@ -44,6 +56,8 @@ async function PStatus(req, res) {
         applied: pstatus.applied,
         total: pstatus.total,
         completion: pstatus.completion,
+        pack: pstatus.pack,
+        pcname: pstatus.pcname,
       },
     });
   } catch (error) {

@@ -34,5 +34,8 @@ const companydataSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const CompanyData = mongoose.model("CompanyData", companydataSchema);
+const CompanyData =
+  mongoose.models.CompanyData ||
+  mongoose.model("CompanyData", companydataSchema);
+
 export default CompanyData;

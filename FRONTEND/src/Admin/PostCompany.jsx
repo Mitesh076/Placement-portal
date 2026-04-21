@@ -1,47 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Building2, Users, Send, Mail, CheckCircle } from "lucide-react";
 
 export default function PostCompany() {
-  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [drives, setDrives] = useState([]);
+  const [driveId, setDriveId] = useState(null);
+  const [students, setStudents] = useState([]);
+
+  const [selectedDrive, setSelectedDrive] = useState(null);
   const [drivePosted, setDrivePosted] = useState(false);
 
-  /* ---------------- MOCK DATA ---------------- */
+  useEffect(() => {
+    fetchDrives();
+  }, []);
 
-  const companies = [
-    {
-      id: 1,
-      name: "Google",
-      role: "Software Engineer",
-      package: "18 LPA",
-      location: "Bangalore",
-      status: "Approved",
-    },
-    {
-      id: 2,
-      name: "Amazon",
-      role: "SDE-1",
-      package: "16 LPA",
-      location: "Hyderabad",
-      status: "Approved",
-    },
-  ];
+  // ✅ FETCH ALL DRIVES (NOT COMPANIES)
+  const fetchDrives = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:8000/api/admin/approved-companies",
+      );
+      const data = await res.json();
+      setDrives(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-  const appliedStudents = [
-    {
-      id: 1,
-      name: "Rahul Sharma",
-      branch: "CSE",
-      cgpa: 8.4,
-      status: "Applied",
-    },
-    {
-      id: 2,
-      name: "Priya Patel",
-      branch: "IT",
-      cgpa: 8.9,
-      status: "Applied",
-    },
-  ];
+  // ✅ SELECT DRIVE (NO API CALL)
+  const handleSelectDrive = (drive) => {
+    console.log("Selected Drive:", drive); //
+    setSelectedDrive(drive);
+    setDriveId(drive._id); // 🔥 IMPORTANT
+    setDrivePosted(false);
+  };
+
+  // ✅ FETCH ELIGIBLE STUDENTS
+  const handlePostDrive = async () => {
+    if (!driveId) {
+      alert("Please select drive first");
+      return;
+    }
+
+    const res = await fetch(
+      `http://localhost:8000/api/admin/drive/eligible/${driveId}`,
+    );
+
+    const data = await res.json();
+
+    console.log("Students:", data);
+
+    // ✅ FIX HERE
+    setStudents(Array.isArray(data) ? data : data.students || []);
+
+    setDrivePosted(true);
+  };
 
   return (
     <div className="space-y-6 p-6 w-full">
@@ -49,13 +61,13 @@ export default function PostCompany() {
       <div>
         <h2 className="text-xl font-semibold">Post Company Drive</h2>
         <p className="text-sm text-slate-500">
-          Select company drive, post it, and send eligible students data
+          Select drive, view students, and send data to company
         </p>
       </div>
 
-      {/* ---------------- COMPANY LIST ---------------- */}
+      {/* DRIVES LIST */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <SectionHeader title="Approved Companies" />
+        <SectionHeader title="Active Drives" />
 
         <table className="w-full text-sm">
           <thead className="bg-slate-50">
@@ -67,21 +79,19 @@ export default function PostCompany() {
               <th className="px-6 py-3 text-left">Action</th>
             </tr>
           </thead>
+
           <tbody>
-            {companies.map((c) => (
-              <tr key={c.id} className="border-t hover:bg-slate-50">
+            {drives.map((d) => (
+              <tr key={d._id} className="border-t hover:bg-slate-50">
                 <td className="px-6 py-3 font-medium flex items-center gap-2">
-                  <Building2 size={16} /> {c.name}
+                  <Building2 size={16} /> {d.name}
                 </td>
-                <td className="px-6 py-3">{c.role}</td>
-                <td className="px-6 py-3">{c.package}</td>
-                <td className="px-6 py-3">{c.location}</td>
+                <td className="px-6 py-3">{d.roles}</td>
+                <td className="px-6 py-3">{d.pack}</td>
+                <td className="px-6 py-3">{d.location}</td>
                 <td className="px-6 py-3">
                   <button
-                    onClick={() => {
-                      setSelectedCompany(c);
-                      setDrivePosted(false);
-                    }}
+                    onClick={() => handleSelectDrive(d)}
                     className="px-3 py-1 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
                   >
                     Select Drive
@@ -93,8 +103,8 @@ export default function PostCompany() {
         </table>
       </div>
 
-      {/* ---------------- SELECTED DRIVE DETAILS ---------------- */}
-      {selectedCompany && (
+      {/* SELECTED DRIVE DETAILS */}
+      {selectedDrive && (
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
           <h3 className="font-semibold text-lg flex items-center gap-2">
             <CheckCircle className="text-green-600" />
@@ -102,86 +112,73 @@ export default function PostCompany() {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-            <Detail label="Company" value={selectedCompany.name} />
-            <Detail label="Role" value={selectedCompany.role} />
-            <Detail label="Package" value={selectedCompany.package} />
-            <Detail label="Location" value={selectedCompany.location} />
+            <Detail label="Company" value={selectedDrive.name} />
+            <Detail label="Role" value={selectedDrive.roles} />
+            <Detail label="Package" value={selectedDrive.pack} />
+            <Detail label="Location" value={selectedDrive.location} />
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-4">
+          <div className="flex gap-3 mt-4">
             <button
-              onClick={() => setDrivePosted(true)}
-              className="px-4  py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+              onClick={handlePostDrive}
+              disabled={!driveId}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+                driveId
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-gray-400 cursor-not-allowed text-white"
+              }`}
             >
               <Mail size={16} /> Post Drive & Notify Students
-            </button>
-
-            <button className="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 flex items-center gap-2">
-              <Mail size={16} /> Notify Company
             </button>
           </div>
         </div>
       )}
 
-      {/* ---------------- APPLIED STUDENTS ---------------- */}
+      {/* STUDENTS */}
       {drivePosted && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <SectionHeader title="Students Applied for the Drive" />
+          <SectionHeader title="Eligible Students" />
 
-          {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
             <StatCard
-              label="Total Applied"
-              value={appliedStudents.length}
+              label="Total Students"
+              value={students.length}
               icon={<Users />}
             />
             <StatCard
               label="Eligible Students"
-              value={appliedStudents.length}
+              value={students.length}
               icon={<CheckCircle />}
             />
-            <StatCard label="Data Sent to Company" value="No" icon={<Send />} />
+            <StatCard label="Data Sent" value="No" icon={<Send />} />
           </div>
 
-          {/* Students Table */}
           <table className="w-full text-sm">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-3 text-left">Student Name</th>
                 <th className="px-6 py-3 text-left">Branch</th>
                 <th className="px-6 py-3 text-left">CGPA</th>
-                <th className="px-6 py-3 text-left">Status</th>
               </tr>
             </thead>
+
             <tbody>
-              {appliedStudents.map((s) => (
-                <tr key={s.id} className="border-t">
+              {students.map((s) => (
+                <tr key={s._id} className="border-t">
                   <td className="px-6 py-3 font-medium">{s.name}</td>
                   <td className="px-6 py-3">{s.branch}</td>
                   <td className="px-6 py-3">{s.cgpa}</td>
-                  <td className="px-6 py-3">
-                    <span className="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                      {s.status}
-                    </span>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          {/* Send Data Button */}
-          <div className="p-6 text-right">
-            <button className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 ml-auto">
-              <Send size={16} /> Send Student Data to Company
-            </button>
-          </div>
         </div>
       )}
     </div>
   );
 }
 
-/* ---------------- REUSABLE COMPONENTS ---------------- */
+/* COMPONENTS */
 
 function SectionHeader({ title }) {
   return (

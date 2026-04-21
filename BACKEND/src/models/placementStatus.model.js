@@ -8,6 +8,10 @@ const placementStatusSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
     student: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
@@ -20,6 +24,7 @@ const placementStatusSchema = new mongoose.Schema(
       default: "Unplaced",
       required: true,
     },
+
     verified: {
       type: String,
       enum: ["Verified", "Unverified"],
@@ -41,6 +46,14 @@ const placementStatusSchema = new mongoose.Schema(
     completion: {
       type: Number,
       required: true,
+    },
+
+    pcname: {
+      type: String,
+    },
+
+    pack: {
+      type: Number,
     },
   },
   { timestamps: true },

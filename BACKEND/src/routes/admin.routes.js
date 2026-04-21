@@ -2,19 +2,26 @@ import express from "express";
 import admincontrollers from "../controllers/admin.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import multer from "multer";
+import { createDrive } from "../controllers/drive.controller.js";
+
 import {
   getAllStudents,
   getVerificationStudents,
   updateVerificationStatus,
+  getEligibleStudents,
+  getPlacedStudents,
 } from "../controllers/student.controller.js";
 
 import {
   getVerificationCompanies,
   updateCompanyVerification,
   getVisitedCompanies,
+  getApprovedCompanies,
+  getCompanyWisePlacement,
 } from "../controllers/company.controller.js";
 
 import { togglePlacement } from "../controllers/placementStatus.controller.js";
+
 import {
   getDashboardStats,
   getRecentDrives,
@@ -30,6 +37,9 @@ import {
   getStudents,
   getCompanies,
 } from "../controllers/admin.controller.js";
+
+import { getReportStats } from "../controllers/report.controller.js";
+
 const upload = multer({
   storage: multer.memoryStorage(),
 });
@@ -71,5 +81,13 @@ router.put("/cverification/:id", updateCompanyVerification);
 
 router.get("/compstats", getCompanyStats);
 router.get("/visitedstats", getVisitedCompanies);
+
+router.get("/approved-companies", getApprovedCompanies);
+router.post("/drive/create", createDrive);
+router.get("/drive/eligible/:driveId", getEligibleStudents);
+
+router.get("/report-stats", getReportStats);
+router.get("/report-pstudents", getPlacedStudents);
+router.get("/reports-cwise", getCompanyWisePlacement);
 
 export default router;

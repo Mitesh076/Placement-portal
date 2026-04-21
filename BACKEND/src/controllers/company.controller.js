@@ -202,4 +202,63 @@ export const getVisitedCompanies = async (req, res) => {
   }
 };
 
-export default { companyProfile, getVisitedCompanies };
+export const getApprovedCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find();
+    const verifications = await CompanyData.find();
+    const cdata = await Drive.find();
+
+    const verificationMap = {};
+    verifications.forEach((v) => {
+      verificationMap[v.company?.toString()] = v;
+    });
+    const dataMap = {};
+    cdata.forEach((d) => {
+      dataMap[d.company?.toString()] = d;
+    });
+
+    const approved = companies
+      .map((c) => {
+        const v = verificationMap[c._id.toString()];
+        const d = dataMap[c._id.toString()];
+
+        return {
+          _id: c._id,
+          name: c.name,
+          roles: d.roles,
+          pack: d.pack,
+          location: c.location,
+          status: v?.verified === "Verified" ? "Verified" : "Unverified",
+        };
+      })
+      .filter((c) => c.status === "Verified");
+
+    res.json(approved);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getCompanyWisePlacement = async (req, res) => {
+  try {
+    const drives = await Drive.find().populate("company");
+
+    const result = drives.map((d) => ({
+      company: d.company?.name,
+      location: d.company?.location,
+      pack: d.pack,
+      splaced: d.company?.splaced || 0, // safe fallback
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export default {
+  companyProfile,
+  getVisitedCompanies,
+  getApprovedCompanies,
+  getCompanyWisePlacement,
+};

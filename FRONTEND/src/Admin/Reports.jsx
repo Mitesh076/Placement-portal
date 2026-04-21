@@ -1,17 +1,49 @@
-import {
-  BarChart,
-  TrendingUp,
-  Users,
-  LayoutDashboard,
-  GraduationCap,
-  Building2,
-  PlusCircle,
-  BarChart3,
-  UserCheck,
-  Settings,
-} from "lucide-react";
+import { BarChart, TrendingUp, Users, Building2 } from "lucide-react";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function Reports() {
+  const [stats, setStats] = useState({
+    totalStudents: "",
+    placedStudents: "",
+    visitedCompanies: "",
+    placementPercentage: "",
+  });
+
+  const [students, setStudents] = useState([]);
+  const [companies, setCompanies] = useState([]);
+
+  const [filters, setFilters] = useState({
+    branch: "All",
+    batch: "2025",
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, [filters]);
+
+  const fetchData = async () => {
+    try {
+      const [statsRes, studentRes, companyRes] = await Promise.all([
+        axios.get("http://localhost:8000/api/admin/report-stats", {
+          params: filters,
+        }),
+        axios.get("http://localhost:8000/api/admin/report-pstudents", {
+          params: filters,
+        }),
+        axios.get("http://localhost:8000/api/admin/reports-cwise"),
+      ]);
+
+      setStats(statsRes.data);
+      setStudents(studentRes.data);
+      setCompanies(companyRes.data);
+      console.log(companyRes.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="h-screen w-screen flex bg-slate-100 text-sm overflow-hidden">
       {/* Main Content */}
@@ -27,19 +59,34 @@ export default function Reports() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-6">
-          <StatCard icon={<Users />} label="Total Students" value="320" />
-          <StatCard icon={<TrendingUp />} label="Placed Students" value="198" />
-          <StatCard icon={<Building2 />} label="Visited Companies" value="42" />
-          <StatCard icon={<BarChart />} label="Placement %" value="61.8%" />
+          <StatCard
+            icon={<Users />}
+            label="Total Students"
+            value={stats.totalStudents}
+          />
+          <StatCard
+            icon={<TrendingUp />}
+            label="Placed Students"
+            value={stats.placedStudents}
+          />
+          <StatCard
+            icon={<Building2 />}
+            label="Visited Companies"
+            value={stats.visitedCompanies}
+          />
+          <StatCard
+            icon={<BarChart />}
+            label="Placement %"
+            value={`${stats.placementPercentage}%`}
+          />
         </div>
 
         {/* Filters */}
         <div className="bg-white rounded-xl p-4 shadow-sm flex gap-4 items-center">
           <select className="border rounded-lg px-3 py-2">
             <option>All Departments</option>
-            <option>CSE</option>
             <option>IT</option>
-            <option>ECE</option>
+            <option>CE</option>
           </select>
           <select className="border rounded-lg px-3 py-2">
             <option>2026 Batch</option>
@@ -52,10 +99,10 @@ export default function Reports() {
         </div>
 
         {/* Placed Students Table */}
-        <ReportTable title="Placed Students Report" />
+        <ReportTable title="Placed Students Report" data={students} />
 
         {/* Company-wise Placement Table */}
-        <CompanyReportTable />
+        <CompanyReportTable data={companies} />
       </main>
     </div>
   );
@@ -75,7 +122,7 @@ function StatCard({ icon, label, value }) {
   );
 }
 
-function ReportTable({ title }) {
+function ReportTable({ title, data }) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="h-14 px-6 flex items-center justify-between border-b">
@@ -92,20 +139,30 @@ function ReportTable({ title }) {
           </tr>
         </thead>
         <tbody>
-          <tr className="border-t">
-            <td className="px-6 py-3">STD101</td>
-            <td className="px-6 py-3">Rahul Sharma</td>
-            <td className="px-6 py-3">CSE</td>
-            <td className="px-6 py-3">Infosys</td>
-            <td className="px-6 py-3">6.5 LPA</td>
-          </tr>
+          {data.length > 0 ? (
+            data.map((s, i) => (
+              <tr key={i} className="border-t">
+                <td className="px-6 py-3">{s.erno}</td>
+                <td className="px-6 py-3">{s.name}</td>
+                <td className="px-6 py-3">{s.branch}</td>
+                <td className="px-6 py-3">{s.pcname}</td>
+                <td className="px-6 py-3">{s.pack} LPA</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" className="text-center py-4 text-slate-400">
+                No data found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   );
 }
 
-function CompanyReportTable() {
+function CompanyReportTable({ data }) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="h-14 px-6 flex items-center justify-between border-b">
@@ -121,12 +178,22 @@ function CompanyReportTable() {
           </tr>
         </thead>
         <tbody>
-          <tr className="border-t">
-            <td className="px-6 py-3">TCS</td>
-            <td className="px-6 py-3">Ahmedabad</td>
-            <td className="px-6 py-3">7 LPA</td>
-            <td className="px-6 py-3 font-semibold">24</td>
-          </tr>
+          {data?.length > 0 ? (
+            data?.map((c, i) => (
+              <tr key={i} className="border-t">
+                <td className="px-6 py-3">{c.company}</td>
+                <td className="px-6 py-3">{c.location}</td>
+                <td className="px-6 py-3">{c.pack} LPA</td>
+                <td className="px-6 py-3">{c.splaced}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" className="text-center py-4 text-slate-400">
+                No data found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

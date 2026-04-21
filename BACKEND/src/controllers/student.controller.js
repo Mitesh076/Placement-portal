@@ -3,6 +3,7 @@ import { uploadFile } from "../Services/student.storage.service.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import PlacementStatus from "../models/placementStatus.model.js";
+import Drive from "../models/drive.model.js";
 
 async function studentProfile(req, res) {
   const token = req.cookies.token;
@@ -25,7 +26,8 @@ async function studentProfile(req, res) {
     if (!file) {
       return res.status(400).json({ message: "Profile image is required" });
     }
-    const { name, erno, gender, sem, branch, cgpa, email, mobile } = req.body;
+    const { name, erno, gender, batch, sem, branch, cgpa, email, mobile } =
+      req.body;
 
     // Check duplicate email
     const existingEmail = await Student.findOne({ email });
@@ -60,6 +62,7 @@ async function studentProfile(req, res) {
       erno,
       gender,
       sem,
+      batch,
       branch,
       cgpa,
       mobile,
@@ -76,6 +79,7 @@ async function studentProfile(req, res) {
         erno: student.erno,
         gender: student.gender,
         sem: student.sem,
+        batch: student.batch,
         cgpa: student.cgpa,
         branch: student.branch,
         mobile: student.mobile,
@@ -183,4 +187,77 @@ export const updateVerificationStatus = async (req, res) => {
   }
 };
 
-export default { studentProfile };
+export const getEligibleStudents = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+
+    console.log("Drive ID:", driveId);
+
+    const drive = await Drive.findById(driveId);
+
+    // ✅ IMPORTANT FIX (avoid null crash)
+    if (!drive) {
+      return res.status(404).json({ message: "Drive not found" });
+    }
+
+    const students = await Student.find();
+
+    const eligible = students.filter((s) => {
+      // ✅ HANDLE STRING "IT,CSE"
+      const branches = drive.ebranches.split(",").map((b) => b.trim());
+
+      return s.cgpa >= drive.mincgpa && branches.includes(s.branch);
+    });
+
+    console.log("Eligible:", eligible.length);
+
+    // ✅ ALWAYS RETURN ARRAY
+    res.status(200).json(eligible);
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getPlacedStudents = async (req, res) => {
+  try {
+    const { branch, batch } = req.query;
+
+    const filter = { status: "Placed" };
+
+    const placements = await PlacementStatus.find(filter)
+      .populate("student")
+      .populate("company");
+
+    // Apply filters AFTER populate (important)
+    const filtered = placements.filter((p) => {
+      const student = p.student;
+
+      if (!student) return false;
+
+      if (branch && branch !== "All" && student.branch !== branch) {
+        return false;
+      }
+
+      if (batch && batch !== "All" && student.batch !== Number(batch)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const result = filtered.map((p) => ({
+      erno: p.student?.erno,
+      name: p.student?.name,
+      branch: p.student?.branch,
+      pcname: p.pcname,
+      pack: p.pack,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export default { studentProfile, getEligibleStudents, getPlacedStudents };
