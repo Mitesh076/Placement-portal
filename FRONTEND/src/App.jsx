@@ -27,6 +27,7 @@ import SelectedStudents from "./Companies/SelectedStudents";
 import InterviewRounds from "./Companies/InterviewRounds";
 import CompanySettings from "./Companies/CompanySettings";
 import AdminProfile from "./Admin/AdminProfile";
+import CompanyDrive from "./Companies/CompanyDrive";
 
 function App() {
   return (
@@ -62,6 +63,8 @@ function App() {
           <Route path="applicants" element={<ApplicantList />} />
           <Route path="selectedstudents" element={<SelectedStudents />} />
           <Route path="rounds" element={<InterviewRounds />} />
+
+          <Route path="drives" element={<CompanyDrive />} />
           <Route path="settings" element={<CompanySettings />} />
         </Route>
       </Routes>

@@ -1,29 +1,41 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Eye } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 
 export default function Verification() {
-  const [students, setStudents] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  const [pendingStudents, setPendingStudents] = useState([]);
+  const [verifiedStudents, setVerifiedStudents] = useState([]);
+  const [pendingCompanies, setPendingCompanies] = useState([]);
+  const [verifiedCompanies, setVerifiedCompanies] = useState([]);
 
   // 🔄 FETCH STUDENTS
   const fetchStudents = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/admin/sverified");
+      const res = await fetch("http://localhost:8000/api/admin/sverified", {
+        credentials: "include",
+      });
       const data = await res.json();
-      setStudents(data);
+
+      // ✅ Backend returns { pending, verified }
+      setPendingStudents(data.pending || []);
+      setVerifiedStudents(data.verified || []);
     } catch (err) {
-      console.error(err);
+      console.error("Students fetch error:", err);
     }
   };
 
   // 🔄 FETCH COMPANIES
   const fetchCompanies = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/admin/cverified");
+      const res = await fetch("http://localhost:8000/api/admin/cverified", {
+        credentials: "include",
+      });
       const data = await res.json();
-      setCompanies(data);
+
+      // ✅ Backend returns { pending, verified, rejected }
+      setPendingCompanies(data.pending || []);
+      setVerifiedCompanies(data.verified || []);
     } catch (err) {
-      console.error(err);
+      console.error("Companies fetch error:", err);
     }
   };
 
@@ -32,41 +44,53 @@ export default function Verification() {
     fetchCompanies();
   }, []);
 
-  // ✅ FILTERS
-  const verifiedStudents = students.filter((s) => s.status === "Verified");
-  const unverifiedStudents = students.filter((s) => s.status === "Unverified");
-
-  const verifiedCompanies = companies.filter((c) => c.status === "Verified");
-  const unverifiedCompanies = companies.filter(
-    (c) => c.status === "Unverified",
-  );
-
-  // ✅ ACTION HANDLERS
-  const handleStudentAction = async (id, status) => {
+  // ✅ STUDENT ACTION — pass placementId not student._id
+  const handleStudentAction = async (placementId, status) => {
     try {
-      await fetch(`/api/admin/sverification/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
+      const res = await fetch(
+        `http://localhost:8000/api/admin/sverification/${placementId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ status }),
+        },
+      );
 
-      fetchStudents();
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Update failed:", err.message);
+        return;
+      }
+
+      fetchStudents(); // ✅ Refresh after update
     } catch (err) {
-      console.error(err);
+      console.error("Student action error:", err);
     }
   };
 
-  const handleCompanyAction = async (id, status) => {
+  // ✅ COMPANY ACTION — pass verificationId not company._id
+  const handleCompanyAction = async (verificationId, status) => {
     try {
-      await fetch(`/api/admin/cverification/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
+      const res = await fetch(
+        `http://localhost:8000/api/admin/cverification/${verificationId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ status }),
+        },
+      );
 
-      fetchCompanies();
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Update failed:", err.message);
+        return;
+      }
+
+      fetchCompanies(); // ✅ Refresh after update
     } catch (err) {
-      console.error(err);
+      console.error("Company action error:", err);
     }
   };
 
@@ -84,8 +108,8 @@ export default function Verification() {
         </div>
 
         <VerificationTable
-          title="Unverified Students"
-          students={unverifiedStudents}
+          title="Pending Students"
+          students={pendingStudents}
           showActions
           onAction={handleStudentAction}
         />
@@ -93,6 +117,7 @@ export default function Verification() {
         <VerificationTable
           title="Verified Students"
           students={verifiedStudents}
+          showActions={false}
         />
 
         {/* COMPANY SECTION */}
@@ -106,8 +131,8 @@ export default function Verification() {
         </div>
 
         <VerificationTableCompanies
-          title="Unverified Companies"
-          companies={unverifiedCompanies}
+          title="Pending Companies"
+          companies={pendingCompanies}
           showActions
           onAction={handleCompanyAction}
         />
@@ -115,6 +140,7 @@ export default function Verification() {
         <VerificationTableCompanies
           title="Verified Companies"
           companies={verifiedCompanies}
+          showActions={false}
         />
       </main>
     </div>
@@ -122,7 +148,6 @@ export default function Verification() {
 }
 
 /* ---------------- STUDENT TABLE ---------------- */
-
 function VerificationTable({ title, students, showActions, onAction }) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -145,45 +170,62 @@ function VerificationTable({ title, students, showActions, onAction }) {
         </thead>
 
         <tbody>
-          {students.map((student) => (
-            <tr key={student._id} className="border-t hover:bg-slate-50">
-              <td className="px-6 py-3 font-medium">{student.studentId}</td>
-              <td className="px-6 py-3">{student.name}</td>
-              <td className="px-6 py-3">{student.department}</td>
-              <td className="px-6 py-3">{student.cgpa}</td>
-              <td className="px-6 py-3">{student.backlogs}</td>
-
-              <td className="px-6 py-3">
-                {student.status === "Verified" ? (
-                  <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
-                    <CheckCircle size={14} /> Verified
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
-                    <XCircle size={14} /> Unverified
-                  </span>
-                )}
+          {students.length === 0 ? (
+            <tr>
+              <td
+                colSpan={showActions ? 7 : 6}
+                className="px-6 py-6 text-center text-slate-400"
+              >
+                No students found
               </td>
-
-              {showActions && (
-                <td className="px-6 py-3 flex gap-2">
-                  <button
-                    onClick={() => onAction(student._id, "Verified")}
-                    className="px-3 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-semibold"
-                  >
-                    Approve
-                  </button>
-
-                  <button
-                    onClick={() => onAction(student._id, "Rejected")}
-                    className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-semibold"
-                  >
-                    Reject
-                  </button>
-                </td>
-              )}
             </tr>
-          ))}
+          ) : (
+            students.map((student) => (
+              <tr key={student._id} className="border-t hover:bg-slate-50">
+                <td className="px-6 py-3 font-medium">{student.studentId}</td>
+                <td className="px-6 py-3">{student.name}</td>
+                <td className="px-6 py-3">{student.department}</td>
+                <td className="px-6 py-3">{student.cgpa}</td>
+                <td className="px-6 py-3">{student.backlogs}</td>
+
+                <td className="px-6 py-3">
+                  {student.status === "Verified" ? (
+                    <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                      <CheckCircle size={14} /> Verified
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
+                      <XCircle size={14} /> Unverified
+                    </span>
+                  )}
+                </td>
+
+                {showActions && (
+                  <td className="px-6 py-3">
+                    <div className="flex gap-2">
+                      {/* ✅ Pass placementId for the update route */}
+                      <button
+                        onClick={() =>
+                          onAction(student.placementId, "Verified")
+                        }
+                        className="px-3 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() =>
+                          onAction(student.placementId, "Rejected")
+                        }
+                        className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-semibold hover:bg-red-200"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -191,7 +233,6 @@ function VerificationTable({ title, students, showActions, onAction }) {
 }
 
 /* ---------------- COMPANY TABLE ---------------- */
-
 function VerificationTableCompanies({
   title,
   companies,
@@ -211,7 +252,7 @@ function VerificationTableCompanies({
         <thead className="bg-slate-50 text-slate-600">
           <tr>
             <th className="px-6 py-3 text-left">Name</th>
-            <th className="px-6 py-3 text-left">Type</th>
+            <th className="px-6 py-3 text-left">Industry</th>
             <th className="px-6 py-3 text-left">Location</th>
             <th className="px-6 py-3 text-left">Status</th>
             {showActions && <th className="px-6 py-3 text-left">Action</th>}
@@ -219,43 +260,60 @@ function VerificationTableCompanies({
         </thead>
 
         <tbody>
-          {companies.map((company) => (
-            <tr key={company._id} className="border-t hover:bg-slate-50">
-              <td className="px-6 py-3">{company.name}</td>
-              <td className="px-6 py-3">{company.industry}</td>
-              <td className="px-6 py-3">{company.location}</td>
-
-              <td className="px-6 py-3">
-                {company.status === "Verified" ? (
-                  <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
-                    <CheckCircle size={14} /> Verified
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
-                    <XCircle size={14} /> Unverified
-                  </span>
-                )}
+          {companies.length === 0 ? (
+            <tr>
+              <td
+                colSpan={showActions ? 5 : 4}
+                className="px-6 py-6 text-center text-slate-400"
+              >
+                No companies found
               </td>
-
-              {showActions && (
-                <td className="px-6 py-3 flex gap-2">
-                  <button
-                    onClick={() => onAction(company._id, "Verified")}
-                    className="px-3 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-semibold"
-                  >
-                    Approve
-                  </button>
-
-                  <button
-                    onClick={() => onAction(company._id, "Rejected")}
-                    className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-semibold"
-                  >
-                    Reject
-                  </button>
-                </td>
-              )}
             </tr>
-          ))}
+          ) : (
+            companies.map((company) => (
+              <tr key={company._id} className="border-t hover:bg-slate-50">
+                <td className="px-6 py-3">{company.name}</td>
+                <td className="px-6 py-3">{company.industry}</td>
+                <td className="px-6 py-3">{company.location}</td>
+
+                <td className="px-6 py-3">
+                  {company.status === "Verified" ? (
+                    <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                      <CheckCircle size={14} /> Verified
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-yellow-600 text-xs font-semibold">
+                      <XCircle size={14} /> Unverified
+                    </span>
+                  )}
+                </td>
+
+                {showActions && (
+                  <td className="px-6 py-3">
+                    <div className="flex gap-2">
+                      {/* ✅ Pass verificationId for the update route */}
+                      <button
+                        onClick={() =>
+                          onAction(company.verificationId, "Verified")
+                        }
+                        className="px-3 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() =>
+                          onAction(company.verificationId, "Rejected")
+                        }
+                        className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-semibold hover:bg-red-200"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

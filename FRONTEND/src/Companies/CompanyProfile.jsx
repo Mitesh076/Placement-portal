@@ -1,309 +1,352 @@
-import { useState } from "react";
-import {
-  Building2,
-  Mail,
-  Globe,
-  MapPin,
-  Briefcase,
-  Calendar,
-  Layers,
-  Save,
-  Edit3,
-  Camera,
-  Phone,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Camera } from "lucide-react";
 
 export default function CompanyProfile() {
-  const [editMode, setEditMode] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [company, setCompany] = useState({
-    name: "Google",
-    industry: "Technology",
-    website: "https://www.google.com",
-    location: "Bangalore, India",
-    hrName: "John Doe",
-    hrEmail: "hr@google.com",
-    mobile: "9876543210",
-    description:
-      "Google is a global technology company focusing on search, cloud computing, and AI-driven solutions.",
+  const [isNewProfile, setIsNewProfile] = useState(false);
 
-    jobRole: "Software Engineer",
-    jobType: "Full Time",
-    package: "12 LPA",
-    minCGPA: "7.0",
-    eligibleBranches: "CSE, IT",
-    bond: "No Bond",
-    driveDate: "2026-03-10",
-    lastDate: "2026-03-05",
-
-    rounds: [
-      "Online Coding Test",
-      "Technical Interview",
-      "Managerial Interview",
-      "HR Interview",
-    ],
+  const [profileData, setProfileData] = useState({});
+  const [formData, setFormData] = useState({
+    name: "",
+    industry: "",
+    website: "",
+    location: "",
+    hrname: "",
+    email: "",
+    mobile: "",
+    description: "",
   });
 
-  const handleChange = (field, value) => {
-    setCompany({ ...company, [field]: value });
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  /* ===========================
+     FETCH PROFILE
+  =========================== */
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:8000/api/company/profile",
+          {
+            withCredentials: true,
+          },
+        );
+
+        const student = res.data.student; // ✅ FIX
+
+        if (student) {
+          setProfileData(student); // ✅ FIX
+          setFormData(student); // ✅ FIX
+          setPreview(student.profilepic); // ✅ FIX
+          setIsNewProfile(false);
+        }
+      } catch (error) {
+        if (error.response?.status === 404) {
+          setIsNewProfile(true);
+        } else {
+          console.log(error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  /* ===========================
+     INPUT CHANGE
+  =========================== */
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
+  /* ===========================
+     IMAGE CHANGE
+  =========================== */
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  /* ===========================
+     SAVE PROFILE
+  =========================== */
+  const handleSave = async () => {
+    try {
+      const form = new FormData();
+
+      Object.keys(formData).forEach((key) => {
+        form.append(key, formData[key]);
+      });
+
+      if (image) {
+        form.append("profilepic", image);
+      }
+
+      let res;
+
+      if (isNewProfile) {
+        // CREATE
+        res = await axios.post(
+          "http://localhost:8000/api/company/profile",
+          form,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+      } else {
+        // UPDATE
+        res = await axios.put(
+          "http://localhost:8000/api/company/profile",
+          form,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+      }
+
+      console.log("DATA:", res.data);
+      const data = res.data.student;
+
+      setProfileData(data);
+      setFormData(data);
+      setPreview(data.profilepic);
+      setIsEditing(false);
+      setIsNewProfile(false);
+      setImage(null);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData(profileData);
+    setPreview(profileData.profilepic);
+    setIsEditing(false);
+  };
+
+  if (loading) {
+    return <div className="p-10 text-lg">Loading profile...</div>;
+  }
+
   return (
-    <div className="space-y-6 p-6 w-full overflow-y-scroll">
+    <div className="w-full mx-auto space-y-8 p-10 overflow-y-scroll">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-semibold">Company Profile</h2>
-          <p className="text-sm text-slate-500">
-            Manage your company and placement drive details
+          <h2 className="text-3xl font-bold">Company Profile</h2>
+          <p className="text-lg text-slate-500">Manage your company details</p>
+        </div>
+
+        {!isEditing ? (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+          >
+            Edit Profile
+          </button>
+        ) : (
+          <button
+            onClick={handleCancel}
+            className="bg-gray-500 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+
+      {/* Profile Card */}
+      <div className="bg-white p-10 rounded-2xl shadow flex items-center gap-10">
+        <div className="relative w-40 h-40 rounded-full border border-black overflow-hidden flex items-center justify-center">
+          {preview ? (
+            <img
+              src={preview}
+              alt="profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-500 font-semibold text-lg">
+              Profile
+            </div>
+          )}
+
+          {isEditing && (
+            <>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                id="upload"
+              />
+              <label
+                htmlFor="upload"
+                className="absolute bottom-2 right-2 bg-indigo-600 text-white p-3 rounded-full cursor-pointer"
+              >
+                <Camera size={20} />
+              </label>
+            </>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-2xl font-semibold">
+            {profileData.name || "No Name"}
+          </h3>
+          <p className="text-lg text-slate-500">
+            {profileData.email || "No Email"}
           </p>
         </div>
-
-        <button
-          onClick={() => setEditMode(!editMode)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-        >
-          {editMode ? <Save size={16} /> : <Edit3 size={16} />}
-          {editMode ? "Save Changes" : "Edit Profile"}
-        </button>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm flex items-center gap-6">
-        <div className="relative">
-          <div className="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-lg">
-            Photo
+      {/* Company Details */}
+      <div className="bg-white p-10 rounded-2xl shadow">
+        <h3 className="text-2xl font-semibold mb-6">Company Details</h3>
+
+        {!isEditing ? (
+          <div className="grid md:grid-cols-3 gap-8 text-lg">
+            <Info label="Company Name" value={profileData.name} />
+            <Info label="Industry" value={profileData.industry} />
+            <Info label="Website" value={profileData.website} />
+            <Info label="Location" value={profileData.location} />
+            <Info label="HR Name" value={profileData.hrname} />
           </div>
-          <button className="absolute bottom-1 right-1 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700">
-            <Camera size={20} />
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
+            <Input
+              name="name"
+              label="Company Name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+            <Input
+              name="industry"
+              label="Industry"
+              value={formData.industry}
+              onChange={handleChange}
+            />
+            <Input
+              name="website"
+              label="Website"
+              value={formData.website}
+              onChange={handleChange}
+            />
+            <Input
+              name="location"
+              label="Location"
+              value={formData.location}
+              onChange={handleChange}
+            />
+            <Input
+              name="hrname"
+              label="HR Name"
+              value={formData.hrname}
+              onChange={handleChange}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Contact Info */}
+      <div className="bg-white p-10 rounded-2xl shadow">
+        <h3 className="text-2xl font-semibold mb-6">Contact Information</h3>
+
+        {!isEditing ? (
+          <div className="grid md:grid-cols-3 gap-8 text-lg">
+            <Info label="Email" value={profileData.email} />
+            <Info label="Mobile" value={profileData.mobile} />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
+            <Input
+              name="email"
+              label="Email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            <Input
+              name="mobile"
+              label="Mobile"
+              value={formData.mobile}
+              onChange={handleChange}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="bg-white p-10 rounded-2xl shadow">
+        <h3 className="text-2xl font-semibold mb-6">Company Description</h3>
+
+        {!isEditing ? (
+          <p className="text-lg text-slate-700">
+            {profileData.description || "No description"}
+          </p>
+        ) : (
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows={4}
+            className="w-full p-4 border rounded-xl"
+          />
+        )}
+      </div>
+
+      {/* Save */}
+      {isEditing && (
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            className="bg-indigo-600 text-white px-10 py-4 rounded-xl text-lg font-semibold"
+          >
+            Save Profile
           </button>
         </div>
-
-        <div>
-          <h3 className="font-semibold text-2xl ">
-            Upload Profile Picture / Company Logo
-          </h3>
-          <p className="text-lg text-slate-500">JPG, PNG or JPEG (max 2MB)</p>
-        </div>
-      </div>
-
-      {/* Company Info */}
-      <Section title="Company Information" icon={<Building2 />}>
-        <Input
-          label="Company Name"
-          value={company.name}
-          edit={editMode}
-          onChange={(v) => handleChange("name", v)}
-        />
-        <Input
-          label="Industry"
-          value={company.industry}
-          edit={editMode}
-          onChange={(v) => handleChange("industry", v)}
-        />
-        <Input
-          label="Website"
-          icon={<Globe size={14} />}
-          value={company.website}
-          edit={editMode}
-          onChange={(v) => handleChange("website", v)}
-        />
-        <Input
-          label="Location"
-          icon={<MapPin size={14} />}
-          value={company.location}
-          edit={editMode}
-          onChange={(v) => handleChange("location", v)}
-        />
-        <Input
-          label="HR Name"
-          value={company.hrName}
-          edit={editMode}
-          onChange={(v) => handleChange("hrName", v)}
-        />
-        <Input
-          label="HR Email"
-          icon={<Mail size={14} />}
-          value={company.hrEmail}
-          edit={editMode}
-          onChange={(v) => handleChange("hrEmail", v)}
-        />
-        <Input
-          label="Contact"
-          icon={<Phone size={14} />}
-          value={company.mobile}
-          edit={editMode}
-          onChange={(v) => handleChange("mobile", v)}
-        />
-        <Textarea
-          label="Company Description"
-          value={company.description}
-          edit={editMode}
-          onChange={(v) => handleChange("description", v)}
-        />
-      </Section>
-
-      {/* Placement Details */}
-      <Section title="Placement Drive Details" icon={<Briefcase />}>
-        <Input
-          label="Job Role"
-          value={company.jobRole}
-          edit={editMode}
-          onChange={(v) => handleChange("jobRole", v)}
-        />
-        <Input
-          label="Job Type"
-          value={company.jobType}
-          edit={editMode}
-          onChange={(v) => handleChange("jobType", v)}
-        />
-        <Input
-          label="Package (CTC)"
-          value={company.package}
-          edit={editMode}
-          onChange={(v) => handleChange("package", v)}
-        />
-        <Input
-          label="Minimum CGPA"
-          value={company.minCGPA}
-          edit={editMode}
-          onChange={(v) => handleChange("minCGPA", v)}
-        />
-        <Input
-          label="Eligible Branches"
-          value={company.eligibleBranches}
-          edit={editMode}
-          onChange={(v) => handleChange("eligibleBranches", v)}
-        />
-        <Input
-          label="Bond"
-          value={company.bond}
-          edit={editMode}
-          onChange={(v) => handleChange("bond", v)}
-        />
-        <Input
-          label="Drive Date"
-          icon={<Calendar size={14} />}
-          type="date"
-          value={company.driveDate}
-          edit={editMode}
-          onChange={(v) => handleChange("driveDate", v)}
-        />
-        <Input
-          label="Last Date to Apply"
-          type="date"
-          value={company.lastDate}
-          edit={editMode}
-          onChange={(v) => handleChange("lastDate", v)}
-        />
-      </Section>
-
-      {/* ---------------- INTERVIEW ROUNDS ---------------- */}
-      <Section title="Interview Process" icon={<Layers />}>
-        <ul className="space-y-2">
-          {company.rounds.map((round, index) => (
-            <li key={index} className="flex items-center gap-3 text-xl">
-              <span className="w-10 h-10 flex items-center  justify-center rounded-full bg-indigo-600 text-white text-2xl">
-                {index + 1}
-              </span>
-
-              {/* Editable Input */}
-              {editMode ? (
-                <input
-                  className="border rounded-md px-2 py-1 flex-1"
-                  value={round}
-                  onChange={(e) => {
-                    const updatedRounds = [...company.rounds];
-                    updatedRounds[index] = e.target.value;
-                    handleChange("rounds", updatedRounds);
-                  }}
-                />
-              ) : (
-                <span className="flex-1">{round}</span>
-              )}
-
-              {/* Delete button (visible in edit mode) */}
-              {editMode && (
-                <button
-                  onClick={() => {
-                    const updatedRounds = company.rounds.filter(
-                      (_, i) => i !== index,
-                    );
-                    handleChange("rounds", updatedRounds);
-                  }}
-                  className="mt-2 px-3 py-1 bg-red-600 text-2xl hover:bg-red-800  text-white rounded-lg"
-                >
-                  Delete
-                </button>
-              )}
-            </li>
-          ))}
-
-          {/* Add new round button */}
-          {editMode && (
-            <li>
-              <button
-                onClick={() =>
-                  handleChange("rounds", [...company.rounds, "New Round"])
-                }
-                className="mt-2 px-3 py-1 bg-indigo-600 text-white text-2xl rounded-lg hover:bg-indigo-700"
-              >
-                + Add Round
-              </button>
-            </li>
-          )}
-        </ul>
-      </Section>
+      )}
     </div>
   );
 }
 
-/* ---------- REUSABLE COMPONENTS ---------- */
-
-function Section({ title, icon, children }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-      <h3 className="font-bold text-2xl flex items-center gap-2">
-        {icon} {title}
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
-    </div>
-  );
-}
-
-function Input({ label, value, edit, onChange, icon, type = "text" }) {
+/* INPUT */
+function Input({ label, name, value, onChange }) {
   return (
     <div>
-      <p className="text-xl text-slate-500  mb-1 flex items-center gap-1">
-        {icon} {label}
-      </p>
-      {edit ? (
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
-        />
-      ) : (
-        <p className="text-xl text-black ">{value}</p>
-      )}
+      <label className="text-base font-medium">{label}</label>
+      <input
+        name={name}
+        value={value || ""}
+        onChange={onChange}
+        className="w-full mt-2 p-4 border rounded-xl"
+      />
     </div>
   );
 }
 
-function Textarea({ label, value, edit, onChange }) {
+/* VIEW */
+function Info({ label, value }) {
   return (
-    <div className="md:col-span-2">
-      <p className="text-xl text-slate-500  mb-1">{label}</p>
-      {edit ? (
-        <textarea
-          rows={3}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full border rounded-lg  px-3 py-2"
-        />
-      ) : (
-        <p className="text-xl text-black ">{value}</p>
-      )}
+    <div>
+      <p className="text-slate-500 text-sm">{label}</p>
+      <p className="font-semibold text-lg">{value || "-"}</p>
     </div>
   );
 }

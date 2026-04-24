@@ -7,51 +7,53 @@ const studentSchema = new mongoose.Schema(
       ref: "User",
     },
     profilepic: {
-      type: String, // cloudinary
-      required: true,
+      type: String,
+      default: null,
     },
     name: {
       type: String,
-      required: true,
+      default: null,
     },
     erno: {
       type: Number,
-      required: true,
-      uniqe: true,
+      default: null,
+      sparse: true, // ✅ allows multiple null values on unique field
+      unique: true,
     },
-
     gender: {
       type: String,
-      enum: ["M", "F", "O"],
-      required: true,
+      enum: ["M", "F", "O", null],
+      default: null,
     },
     branch: {
       type: String,
-      enum: ["CE", "IT"],
-      required: true,
+      enum: ["CE", "IT", null],
+      default: null,
     },
     sem: {
       type: Number,
-      enum: [1, 2, 3, 4, 5, 6, 7, 8],
-      required: true,
+      enum: [1, 2, 3, 4, 5, 6, 7, 8, null],
+      default: null,
     },
     cgpa: {
       type: Number,
-      required: true,
+      default: null,
     },
     email: {
       type: String,
-      uniqe: true,
-      required: true,
+      default: null,
+      sparse: true, // ✅ allows multiple null on unique field
+      unique: true,
     },
     mobile: {
       type: Number,
-      uniqe: true,
-      required: true,
-      maxlength: 10,
+      default: null,
+      sparse: true,
+      unique: true,
     },
     batch: {
       type: Number,
+      default: null,
     },
   },
   { timestamps: true },

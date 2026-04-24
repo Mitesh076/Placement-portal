@@ -8,33 +8,29 @@ const adminSchema = new mongoose.Schema(
     },
     profilepic: {
       type: String,
-      required: true, // cloudinary
+      default: null, // ✅ optional
     },
     name: {
       type: String,
-      required: true,
+      default: null, // ✅ optional
     },
-
     gender: {
       type: String,
-      enum: ["M", "F", "O"],
-      required: true,
+      enum: ["M", "F", "O", null],
+      default: null, // ✅ optional
     },
     branch: {
       type: String,
-      enum: ["CE", "IT"],
-      required: true,
+      enum: ["CE", "IT", null],
+      default: null, // ✅ optional
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
+      default: null, // ✅ optional
     },
     mobile: {
       type: Number,
-      required: true,
-      unique: true,
-      maxlength: 10,
+      default: null, // ✅ optional
     },
   },
   { timestamps: true },

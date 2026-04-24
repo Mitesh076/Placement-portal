@@ -1,48 +1,64 @@
 import mongoose from "mongoose";
-
 const appliedSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-    },
-    cname: {
-      type: String,
-      require: true, // cloudinary
-    },
-    role: {
-      type: String,
-      required: true, // cloudinary
-    },
-    appliedon: {
-      type: Date,
       required: true,
-    },
-    nextroundon: {
-      type: Date,
-      required: true, // cloudinary
-    },
-    round: {
-      type: String,
-      required: true, // cloudinary
-    },
-    nextround: {
-      type: String,
-      required: true, // cloudinary
-    },
-    progress: {
-      type: Number,
-      required: true, // cloudinary
     },
 
+    drive: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Drive",
+      required: true,
+    },
+
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+
+    cname: String,
+    role: String,
+
+    // ✅ STATUS
     status: {
       type: String,
-      enum: ["Applied", "Selected", "Rejected", "Shortlisted", "Pending"],
-      required: true,
+      enum: ["Applied", "Shortlisted", "Selected", "Rejected"],
+      default: "Applied",
+    },
+
+    // ✅ ROUNDS SYSTEM
+    totalRounds: {
+      type: Number,
+      default: 4,
+    },
+
+    roundsCleared: {
+      type: Number,
+      default: 0,
+    },
+
+    // ✅ NEXT ROUND INFO
+    nextround: {
+      type: String,
+      default: null,
+    },
+
+    nextroundon: {
+      type: Date,
+      default: null,
+    },
+
+    appliedon: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true },
 );
 
-const Applied = mongoose.model("Applied", appliedSchema);
-export default Applied;
+// ✅ prevent duplicate apply
+appliedSchema.index({ user: 1, drive: 1 }, { unique: true });
+
+export default mongoose.model("Applied", appliedSchema);

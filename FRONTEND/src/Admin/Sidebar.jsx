@@ -78,12 +78,12 @@ export default function Sidebar() {
               Add Companies
             </NavLink>
           </li> */}
-          <li>
+          {/* <li>
             <NavLink to="/admin/postcompany" className={linkClass}>
               <PlusSquareIcon size={18} />
               Post Companies
             </NavLink>
-          </li>
+          </li> */}
 
           <li>
             <NavLink to="/admin/reports" className={linkClass}>

@@ -8,28 +8,27 @@ const placementStatusSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    company: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
+
     student: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
       required: true,
+    },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
     },
 
     status: {
       type: String,
       enum: ["Placed", "Unplaced"],
       default: "Unplaced",
-      required: true,
     },
 
     verified: {
       type: String,
-      enum: ["Verified", "Unverified"],
+      enum: ["Verified", "Unverified", "Pending", "Rejected"],
       default: "Unverified",
-      required: true,
     },
     eligible: {
       type: Number,

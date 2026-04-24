@@ -4,85 +4,110 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import Student from "../models/student.model.js";
 import Company from "../models/company.model.js";
+import Applied from "../models/applied.model.js";
+import PlacementStatus from "../models/placementStatus.model.js";
+import PlacementOffers from "../models/placementOffers.model.js";
 
-async function adminProfile(req, res) {
-  const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized user" });
-  }
-
+export const getAdminProfile = async (req, res) => {
   try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+
+    const admin = await Admin.findOne({ user: decoded.id });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json({ admin });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching profile" });
+  }
+};
+
+export const upsertAdminProfile = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (decoded.role !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "You dont have access to use the admin profile " });
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({ message: "Profile image is required" });
-    }
+    const user = await User.findById(decoded.id);
+
     const { name, gender, branch, mobile, email } = req.body;
 
-    const result = await uploadFile(file.buffer.toString("base64"));
+    let admin = await Admin.findOne({ user: decoded.id });
 
-    const existingAdmin = await Admin.findOne({
+    // duplicate check
+    const duplicate = await Admin.findOne({
       $or: [{ email }, { mobile }],
+      ...(admin && { _id: { $ne: admin._id } }),
     });
 
-    if (existingAdmin) {
-      if (existingAdmin.email === email) {
-        return res.status(400).json({ message: "Email already exists" });
-      }
-
-      if (existingAdmin.mobile === mobile) {
-        return res
-          .status(400)
-          .json({ message: "Mobile number already exists" });
-      }
-    }
-
-    const admin = await Admin.create({
-      profilepic: result.url,
-      user: decoded.id,
-      name,
-      gender,
-      branch,
-      mobile,
-      email: email || user.email,
-    });
-
-    return res.status(201).json({
-      message: "Admin profile Created successfully ",
-      admin: {
-        id: admin._id,
-        profilepic: admin.profilepic,
-        user: admin.user,
-        name: admin.name,
-        gender: admin.gender,
-        branch: admin.branch,
-        mobile: admin.mobile,
-        email: admin.email,
-      },
-    });
-  } catch (error) {
-    if (error.code === 11000) {
+    if (duplicate) {
       return res.status(400).json({
-        message: "Duplicate data not allowed",
+        message: "Email or Mobile already exists",
       });
     }
 
-    return res.status(500).json({ message: "Something went wrong" });
+    let imageUrl =
+      admin?.profilepic ||
+      "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+    if (req.file) {
+      const result = await uploadFile(req.file.buffer.toString("base64"));
+      imageUrl = result.url;
+    }
+
+    // CREATE
+    if (!admin) {
+      admin = await Admin.create({
+        user: decoded.id,
+        name,
+        gender,
+        branch,
+        mobile,
+        email: email || user.email,
+        profilepic: imageUrl,
+      });
+
+      return res.status(201).json({
+        message: "Admin profile created",
+        admin,
+      });
+    }
+
+    // UPDATE
+    admin.name = name || admin.name;
+    admin.gender = gender || admin.gender;
+    admin.branch = branch || admin.branch;
+    admin.mobile = mobile || admin.mobile;
+    admin.email = email || admin.email;
+    admin.profilepic = imageUrl;
+
+    await admin.save();
+
+    res.status(200).json({
+      message: "Admin profile updated",
+      admin,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Something went wrong" });
   }
-}
+};
 
 export const updateAdminProfile = async (req, res) => {
   try {
     const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const admin = await Admin.findOne({ user: decoded.id });
@@ -92,15 +117,25 @@ export const updateAdminProfile = async (req, res) => {
     }
 
     const { name, gender, branch, mobile, email } = req.body;
-    const file = req.file;
 
-    // ✅ keep old image by default
+    // 🔍 Duplicate check
+    const duplicate = await Admin.findOne({
+      $or: [{ email }, { mobile }],
+      _id: { $ne: admin._id },
+    });
+
+    if (duplicate) {
+      return res.status(400).json({
+        message: "Email or Mobile already exists",
+      });
+    }
+
     let imageUrl = admin.profilepic;
 
-    // ✅ update only if new image uploaded
-    if (file) {
-      const result = await uploadFile(file.buffer.toString("base64"));
-      imageUrl = result;
+    // ✅ Update image if provided
+    if (req.file) {
+      const result = await uploadFile(req.file.buffer.toString("base64"));
+      imageUrl = result.url;
     }
 
     admin.name = name || admin.name;
@@ -113,86 +148,60 @@ export const updateAdminProfile = async (req, res) => {
     await admin.save();
 
     res.json({
-      message: "Profile updated",
-      admin,
-    });
-  } catch (error) {
-    console.log("UPDATE ERROR:", error); // 👈 IMPORTANT
-    res.status(500).json({ message: "Error updating profile" });
-  }
-};
-
-export const updateProfileImage = async (req, res) => {
-  try {
-    const token = req.cookies.token;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const admin = await Admin.findOne({ user: decoded.id });
-
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ message: "Image required" });
-    }
-
-    const result = await uploadFile(req.file.buffer.toString("base64"));
-
-    // ✅ update only image
-    admin.profilepic = result.url;
-
-    await admin.save();
-
-    res.json({
-      message: "Image updated successfully",
+      message: "Profile updated successfully",
       admin,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error updating image" });
+    res.status(500).json({ message: "Error updating profile" });
   }
 };
 
-export const createUser = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
 
-    // 1. Create user
-    const user = await User.create({ name, email, password, role });
-
-    res.status(201).json({ message: "User created successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
 export const deleteUser = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // ✅ Fixed destructuring
 
-    const user = await User.findById(id);
+    // Try finding user directly first
+    let user = await User.findById(id);
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // If not found, maybe `id` is a Student/Admin/Company doc id
+    if (!user) {
+      const student = await Student.findById(id);
+      const admin = await Admin.findById(id);
+      const company = await Company.findById(id);
 
-    // Delete role-specific data
-    if (user.role === "student") {
-      await Student.findOneAndDelete({ user: id });
+      const profile = student || admin || company;
+      if (!profile) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      user = await User.findById(profile.user); // resolve via reference
     }
 
-    if (user.role === "admin") {
-      await Admin.findOneAndDelete({ user: id });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.role === "company") {
-      await Company.findOneAndDelete({ user: id });
-    }
+    // ✅ Delete role-specific profile
+    if (user.role === "student")
+      await Student.findOneAndDelete({ user: user._id });
+    if (user.role === "admin") await Admin.findOneAndDelete({ user: user._id });
+    if (user.role === "company")
+      await Company.findOneAndDelete({ user: user._id });
 
-    // Delete main user
-    await User.findByIdAndDelete(id);
+    // ✅ Delete related placement data
+    await Applied.deleteMany({ user: user._id });
+    await PlacementStatus.findOneAndDelete({ user: user._id });
+    await PlacementOffers.deleteMany({ user: user._id });
 
-    res.json({ message: "User deleted successfully" });
+    // ✅ Delete the User itself
+    await User.findByIdAndDelete(user._id);
+
+    res.json({ message: "User and related data deleted successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -217,15 +226,13 @@ export const getCompanies = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   const users = await User.find();
-
   res.json(users);
 };
 
 export default {
-  adminProfile,
+  getAdminProfile,
+  upsertAdminProfile,
   updateAdminProfile,
-  updateProfileImage,
-  createUser,
   deleteUser,
   getStudents,
   getAdmins,

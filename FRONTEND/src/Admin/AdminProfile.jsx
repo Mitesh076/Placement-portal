@@ -9,6 +9,9 @@ export default function AdminProfile() {
   const [profileData, setProfileData] = useState({});
   const [formData, setFormData] = useState({});
 
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+
   // ✅ FETCH ADMIN DATA
   useEffect(() => {
     const fetchAdmin = async () => {
@@ -19,7 +22,9 @@ export default function AdminProfile() {
 
         const admin = res.data.admin;
 
-        const formattedData = {
+        if (!admin) return;
+
+        const formatted = {
           fullName: admin.name || "",
           gender:
             admin.gender === "M"
@@ -36,165 +41,180 @@ export default function AdminProfile() {
           profilepic: admin.profilepic || "",
         };
 
-        setProfileData(formattedData);
-        setFormData(formattedData);
-        setLoading(false);
+        setProfileData(formatted);
+        setFormData(formatted);
+        setPreview(admin.profilepic || "");
       } catch (err) {
-        console.log(err);
+        console.log("Fetch Error:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchAdmin();
   }, []);
 
-  // ✅ HANDLE CHANGE
+  // ✅ HANDLE INPUT CHANGE
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
-  // ✅ IMAGE UPLOAD
-  const handleImageUpload = async (e) => {
+  // ✅ HANDLE IMAGE CHANGE
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
-
     if (!file) return;
 
-    const data = new FormData();
-    data.append("profilepic", file);
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
 
+  // ✅ SAVE PROFILE
+  const handleSave = async () => {
     try {
+      const form = new FormData();
+
+      form.append("name", formData.fullName);
+      form.append(
+        "gender",
+        formData.gender === "Male"
+          ? "M"
+          : formData.gender === "Female"
+            ? "F"
+            : "O",
+      );
+      form.append(
+        "branch",
+        formData.department === "Computer Engineering" ? "CE" : "IT",
+      );
+      form.append("email", formData.email);
+      form.append("mobile", formData.mobile);
+
+      if (image) form.append("profilepic", image);
+
       const res = await axios.post(
-        "http://localhost:8000/api/upload/admin-profile",
-        data,
+        "http://localhost:8000/api/admin/profile",
+        form,
         {
           withCredentials: true,
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
 
-      // 🔥 assuming backend returns URL
-      const imageUrl = res.data.url;
+      const updated = res.data.admin;
 
-      setFormData({
-        ...formData,
-        profilepic: imageUrl,
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  // ✅ SAVE PROFILE
-  const handleSave = async () => {
-    try {
-      const payload = {
-        name: formData.fullName,
+      const formatted = {
+        fullName: updated.name,
         gender:
-          formData.gender === "Male"
-            ? "M"
-            : formData.gender === "Female"
-              ? "F"
-              : "O",
-        branch: formData.department === "Computer Engineering" ? "CE" : "IT",
-        email: formData.email,
-        mobile: formData.mobile,
-        profilepic: formData.profilepic,
+          updated.gender === "M"
+            ? "Male"
+            : updated.gender === "F"
+              ? "Female"
+              : "Other",
+        department:
+          updated.branch === "CE"
+            ? "Computer Engineering"
+            : "Information Technology",
+        email: updated.email,
+        mobile: updated.mobile,
+        profilepic: updated.profilepic,
       };
 
-      await axios.put("http://localhost:8000/api/admin/profile", payload, {
-        withCredentials: true,
-      });
-
-      setProfileData(formData);
+      setProfileData(formatted);
+      setFormData(formatted);
+      setPreview(updated.profilepic);
+      setImage(null);
       setIsEditing(false);
     } catch (err) {
-      console.log(err);
+      console.log("Save Error:", err);
     }
   };
 
+  // ✅ CANCEL EDIT
   const handleCancel = () => {
     setFormData(profileData);
+    setPreview(profileData.profilepic);
     setIsEditing(false);
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center text-slate-500 text-lg">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full mx-auto space-y-8 p-10 overflow-y-scroll">
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold">Admin Profile</h2>
-          <p className="text-lg text-slate-500">
-            Complete your profile details
-          </p>
-        </div>
+    <div className="min-h-screen w-full bg-linear-to-br from-slate-100 to-slate-200 p-6">
+      <div className="w-full mx-auto space-y-8">
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-800">Admin Profile</h2>
+            <p className="text-slate-500">Manage and update your details</p>
+          </div>
 
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-lg"
-          >
-            Edit Profile
-          </button>
-        ) : (
-          <button
-            onClick={handleCancel}
-            className="bg-gray-500 text-white px-8 py-3 rounded-lg"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
-
-      {/* PROFILE CARD */}
-      <div className="bg-white p-10 rounded-2xl shadow flex items-center gap-10">
-        <div className="relative">
-          <img
-            src={
-              (isEditing ? formData.profilepic : profileData.profilepic) ||
-              "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-            }
-            className="w-40 h-40 rounded-full object-cover"
-          />
-
-          {isEditing && (
-            <label className="absolute bottom-2 right-2 bg-indigo-600 text-white p-3 rounded-full cursor-pointer">
-              <Camera size={20} />
-              <input type="file" hidden onChange={handleImageUpload} />
-            </label>
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg shadow-md"
+            >
+              Edit Profile
+            </button>
+          ) : (
+            <button
+              onClick={handleCancel}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-lg shadow-md"
+            >
+              Cancel
+            </button>
           )}
         </div>
 
-        <div>
-          <h3 className="text-2xl font-semibold">
-            {isEditing ? formData.fullName : profileData.fullName}
-          </h3>
-          <p className="text-lg text-slate-500">
-            {isEditing ? formData.email : profileData.email}
-          </p>
-        </div>
-      </div>
+        {/* PROFILE CARD */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-6">
+          <div className="relative group">
+            <img
+              src={
+                preview ||
+                "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+              }
+              alt="profile"
+              className="w-28 h-28 rounded-full object-cover border-4 border-indigo-100"
+            />
 
-      {/* PERSONAL DETAILS */}
-      <div className="bg-white p-10 rounded-2xl shadow">
-        <h3 className="text-2xl font-semibold mb-6">Personal Details</h3>
-
-        {!isEditing ? (
-          <div className="grid md:grid-cols-3 gap-8">
-            <Info label="Full Name" value={profileData.fullName} />
-            <Info label="Gender" value={profileData.gender} />
-            <Info label="Department" value={profileData.department} />
+            {isEditing && (
+              <label className="absolute bottom-1 right-1 bg-indigo-600 text-white p-2 rounded-full cursor-pointer shadow hover:bg-indigo-700">
+                <Camera size={16} />
+                <input type="file" hidden onChange={handleImageChange} />
+              </label>
+            )}
           </div>
-        ) : (
-          <div className="grid md:grid-cols-3 gap-8">
+
+          <div>
+            <h3 className="text-xl font-semibold text-slate-800">
+              {profileData.fullName || "Your Name"}
+            </h3>
+            <p className="text-slate-500 text-sm">{profileData.email}</p>
+          </div>
+        </div>
+
+        {/* FORM CARD */}
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h3 className="text-lg font-semibold text-slate-700 mb-6">
+            Personal Information
+          </h3>
+
+          <div className="grid md:grid-cols-2 gap-6">
             <Input
               label="Full Name"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
+              disabled={!isEditing}
             />
 
             <Select
@@ -203,6 +223,7 @@ export default function AdminProfile() {
               value={formData.gender}
               onChange={handleChange}
               options={["Male", "Female", "Other"]}
+              disabled={!isEditing}
             />
 
             <Select
@@ -211,95 +232,77 @@ export default function AdminProfile() {
               value={formData.department}
               onChange={handleChange}
               options={["Computer Engineering", "Information Technology"]}
+              disabled={!isEditing}
             />
-          </div>
-        )}
-      </div>
 
-      {/* CONTACT */}
-      <div className="bg-white p-10 rounded-2xl shadow">
-        <h3 className="text-2xl font-semibold mb-6">Contact Information</h3>
-
-        {!isEditing ? (
-          <div className="grid md:grid-cols-2 gap-8">
-            <Info label="Email" value={profileData.email} />
-            <Info label="Mobile" value={profileData.mobile} />
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-8">
             <Input
-              label="Email"
+              label="Email Address"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              disabled={!isEditing}
             />
 
             <Input
-              label="Mobile"
+              label="Mobile Number"
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
+              disabled={!isEditing}
             />
           </div>
-        )}
-      </div>
 
-      {/* SAVE */}
-      {isEditing && (
-        <div className="flex justify-end">
-          <button
-            onClick={handleSave}
-            className="bg-indigo-600 text-white px-10 py-4 rounded-xl"
-          >
-            Save Profile
-          </button>
+          {isEditing && (
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={handleSave}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg"
+              >
+                Save Changes
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-/* COMPONENTS */
-
-function Input({ label, name, value, onChange }) {
+/* INPUT */
+function Input({ label, name, value, onChange, disabled }) {
   return (
     <div>
-      <label>{label}</label>
+      <label className="text-sm font-medium text-slate-600">{label}</label>
       <input
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="w-full mt-2 p-3 border rounded"
+        disabled={disabled}
+        className="w-full mt-2 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
       />
     </div>
   );
 }
 
-function Select({ label, name, value, onChange, options }) {
+/* SELECT */
+function Select({ label, name, value, onChange, options, disabled }) {
   return (
     <div>
-      <label>{label}</label>
+      <label className="text-sm font-medium text-slate-600">{label}</label>
       <select
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="w-full mt-2 p-3 border rounded"
+        disabled={disabled}
+        className="w-full mt-2 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
       >
+        <option value="">Select</option>
         {options.map((opt, i) => (
           <option key={i} value={opt}>
             {opt}
           </option>
         ))}
       </select>
-    </div>
-  );
-}
-
-function Info({ label, value }) {
-  return (
-    <div>
-      <p className="text-gray-500">{label}</p>
-      <p className="font-semibold">{value}</p>
     </div>
   );
 }

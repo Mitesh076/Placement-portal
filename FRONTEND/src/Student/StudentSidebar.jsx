@@ -40,6 +40,12 @@ export default function Sidebar() {
               Profile
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/students/academics" className={linkClass}>
+              <BookOpen size={18} />
+              Academic Details
+            </NavLink>
+          </li>
 
           <li>
             <NavLink to="/students/applied" className={linkClass}>
@@ -58,29 +64,23 @@ export default function Sidebar() {
           <li>
             <NavLink to="/students/status" className={linkClass}>
               <CheckCircle size={18} />
-              Placement Status
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/students/academics" className={linkClass}>
-              <BookOpen size={18} />
-              Academic Details
+              Placement Offers
             </NavLink>
           </li>
 
-          <li>
+          {/* <li>
             <NavLink to="/students/documents" className={linkClass}>
               <Files size={18} />
               Documents
             </NavLink>
-          </li>
+          </li> */}
 
-          <li>
+          {/* <li>
             <NavLink to="/students/settings" className={linkClass}>
               <Settings size={18} />
               Settings
             </NavLink>
-          </li>
+          </li> */}
         </ul>
 
         {/* Footer */}

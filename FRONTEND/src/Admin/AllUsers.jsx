@@ -12,7 +12,7 @@ export default function AllUsers() {
     username: "",
     email: "",
     password: "",
-    role: "Student",
+    role: "student",
   });
 
   useEffect(() => {
@@ -34,10 +34,6 @@ export default function AllUsers() {
         }),
       ]);
 
-      console.log("Admins 👉", adminRes.data);
-      console.log("Students 👉", studentRes.data);
-      console.log("Companies 👉", companyRes.data);
-
       setAdmins(adminRes.data || []);
       setStudents(studentRes.data || []);
       setCompanies(companyRes.data || []);
@@ -51,14 +47,16 @@ export default function AllUsers() {
   // ✅ ADD USER
   const handleAddUser = async () => {
     try {
-      await axios.post("http://localhost:8000/api/auth/register", formData);
+      await axios.post("http://localhost:8000/api/auth/register", formData, {
+        withCredentials: true,
+      });
 
       setShowModal(false);
       setFormData({
         username: "",
         email: "",
         password: "",
-        role: "Student",
+        role: "student",
       });
 
       fetchUsers();
@@ -69,11 +67,19 @@ export default function AllUsers() {
 
   // ✅ DELETE USER
   const handleDelete = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this user?",
+    );
+    if (!confirmed) return;
+
     try {
-      await axios.delete(`http://localhost:8000/api/admin/delete/${id}`);
-      fetchUsers();
+      await axios.delete(`http://localhost:8000/api/admin/delete/${id}`, {
+        withCredentials: true,
+      });
+      fetchUsers(); // ✅ Refresh the tables
     } catch (err) {
-      console.log(err);
+      alert(err.response?.data?.message || "Failed to delete user");
+      console.error(err);
     }
   };
 
@@ -133,9 +139,9 @@ export default function AllUsers() {
               type="text"
               placeholder="Name"
               className="w-full border p-2 rounded"
-              value={formData.name}
+              value={formData.username}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                setFormData({ ...formData, username: e.target.value })
               }
             />
 

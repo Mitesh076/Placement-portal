@@ -1,31 +1,57 @@
 import express from "express";
-import studentcontroller from "../controllers/student.controller.js";
-import multer from "multer";
-import placementStatusController from "../controllers/placementStatus.controller.js";
-import placementOffersController from "../controllers/placementOffers.controllers.js";
-import appliedController from "../controllers/applied.controller.js";
-import tenthdetailcontroller from "../controllers/tenthdetail.controller.js";
-import twelthdetailcontroller from "../controllers/twelthdetail.controller.js";
-import graduationcontroller from "../controllers/graduation.controller.js";
-import semcontroller from "../controllers/sem.controller.js";
 
+import { protect } from "../middlewares/auth.middleware.js";
+import multer from "multer";
+import {
+  acceptOffer,
+  rejectOffer,
+  getPlacementStatus,
+  applyToDrive,
+  getAvailableCompanies,
+  getAppliedCompanies,
+  getPlacementStats,
+  getStudentDashboard,
+  requestVerification,
+  saveTenthDetails,
+  saveTwelthDetails,
+  saveSemDetails,
+  getAcademicDetails,
+  createStudentProfile,
+  getStudentProfile,
+  updateStudentProfile,
+} from "../controllers/student.controller.js";
+
+const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
 });
+// -----------------------------------------------------------------------
+router.post("/profile", upload.single("profilepic"), createStudentProfile);
+router.get("/profile", getStudentProfile);
+router.put("/profile", upload.single("profilepic"), updateStudentProfile);
 
-const router = express.Router();
+// -----------------------------------------------------------------------
+router.post("/tenth", saveTenthDetails);
+router.post("/twelth", saveTwelthDetails);
+router.post("/sem", saveSemDetails);
+router.get("/academics", getAcademicDetails);
 
-router.post(
-  "/profile",
-  upload.single("profilepic"),
-  studentcontroller.studentProfile,
-);
-router.post("/pstatus", placementStatusController.PStatus);
-router.post("/poffers", placementOffersController.POffers);
-router.post("/applied", appliedController.Appliedcompanies);
-router.post("/tenth", tenthdetailcontroller.Tenthdetails);
-router.post("/twelth", twelthdetailcontroller.Twelthdetails);
-router.post("/graduation", graduationcontroller.Graduationdetails);
-router.post("/sem", semcontroller.Semdetails);
+// ----------------------------------------------------------------
+
+router.get("/student-dashboard", protect, getStudentDashboard);
+router.put("/request-verification", protect, requestVerification);
+// -----------------------------------------------------------------
+
+router.get("/placementstats", protect, getPlacementStats);
+router.get("/appliedcompanies", protect, getAppliedCompanies);
+// ----------------------------------------------------------------
+router.get("/available-companies", protect, getAvailableCompanies);
+router.post("/apply", protect, applyToDrive);
+// ---------------------------------------------------------------------
+
+router.get("/pstatus", protect, getPlacementStatus);
+router.put("/offer/accept/:offerId", protect, acceptOffer);
+router.put("/offer/reject/:offerId", protect, rejectOffer);
+// ------------------------------------------------------------------------------
 
 export default router;

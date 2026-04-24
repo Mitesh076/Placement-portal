@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Briefcase,
   CheckCircle,
@@ -10,19 +10,70 @@ import {
 } from "lucide-react";
 
 export default function StudentDashboard() {
-  const [profileCompletion, setProfileCompletion] = useState(20);
-  const [verificationStatus, setVerificationStatus] = useState("not_requested");
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const isProfileComplete = profileCompletion === 100;
+  // ✅ FETCH DATA
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:8000/api/student/student-dashboard",
+          {
+            credentials: "include",
+          },
+        );
 
-  const requestVerification = () => {
-    setVerificationStatus("pending");
+        const data = await res.json();
+        setDashboard(data.data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // simulate admin verification
-    setTimeout(() => {
-      setVerificationStatus("verified");
-    }, 5000);
+    fetchDashboard();
+  }, []);
+
+  // ✅ REQUEST VERIFICATION API
+  const handleRequestVerification = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:8000/api/student/request-verification",
+        {
+          method: "PUT",
+          credentials: "include",
+        },
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Verification request sent!");
+
+        // ✅ update UI instantly
+        setDashboard((prev) => ({
+          ...prev,
+          stats: {
+            ...prev.stats,
+            verified: "Pending",
+          },
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  if (loading) return <p className="p-5">Loading...</p>;
+  if (!dashboard) return <p className="p-5">No Data Found</p>;
+
+  const { stats, student, upcomingDrives, recentApplications } = dashboard;
+
+  // ✅ SAFE CONDITIONS
+  const isProfileComplete = Number(stats.completion) >= 100;
+  const status = stats.verified?.toLowerCase();
 
   return (
     <div className="space-y-6 w-full p-5">
@@ -39,79 +90,81 @@ export default function StudentDashboard() {
 
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-lg font-medium">Student Name</p>
+            <p className="text-lg font-medium">{student?.name}</p>
             <p className="text-md text-slate-500">Student</p>
           </div>
-          <div className="w-15 h-15 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">
-            S
-          </div>
+
+          <img
+            src={student?.profilepic || "/default-avatar.png"}
+            alt="profile"
+            className="w-12 h-12 rounded-full object-cover"
+          />
         </div>
       </header>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard
           icon={<TrendingUp />}
           label="Profile Completion"
-          value={`${profileCompletion}%`}
+          value={`${stats.completion}%`}
         />
-        <StatCard icon={<Briefcase />} label="Applied Companies" value="6" />
-        <StatCard icon={<Building2 />} label="Eligible Companies" value="12" />
+
+        <StatCard
+          icon={<Briefcase />}
+          label="Applied Companies"
+          value={stats.applied}
+        />
+
+        <StatCard
+          icon={<Building2 />}
+          label="Eligible Companies"
+          value={stats.eligible}
+        />
+
         <StatCard
           icon={<CheckCircle />}
           label="Verification Status"
-          value={
-            verificationStatus === "verified"
-              ? "Verified"
-              : verificationStatus === "pending"
-                ? "Pending"
-                : "Not Verified"
-          }
-          highlight={verificationStatus !== "verified"}
+          value={stats.verified}
+          highlight={status !== "verified"}
         />
       </div>
 
-      {/* PROFILE COMPLETION ALERT */}
-      {profileCompletion < 100 && (
+      {/* ❌ INCOMPLETE PROFILE */}
+      {!isProfileComplete && (
         <Notification
           icon={<AlertCircle />}
           color="yellow"
-          title="Complete Your Profile"
-          message="Complete your profile and upload all required documents to become eligible for more companies."
-          actionLabel="Complete Profile"
-          onAction={() => alert("Navigate to Profile Page")}
+          message="Complete your profile to unlock placement opportunities."
         />
       )}
 
-      {/* REQUEST VERIFICATION */}
-      {isProfileComplete && verificationStatus === "not_requested" && (
+      {/* 🟡 REQUEST BUTTON */}
+      {isProfileComplete && status === "unverified" && (
         <Notification
           icon={<ShieldCheck />}
           color="indigo"
-          title="Verify Your Account"
-          message="Your profile is complete. Request admin verification to apply for placement drives."
+          message="Your profile is complete. Request admin verification."
           actionLabel="Request Verification"
-          onAction={requestVerification}
+          onAction={handleRequestVerification}
         />
       )}
 
-      {/* PENDING VERIFICATION */}
-      {verificationStatus === "pending" && (
+      {/* 🟠 PENDING */}
+      {status === "pending" && (
         <Notification
           icon={<Clock />}
           color="orange"
-          title="Verification Pending"
-          message="Your verification request has been sent. Please wait for admin approval."
+          message="Verification request sent. Please wait for admin approval."
         />
       )}
 
-      {/* VERIFIED */}
-      {verificationStatus === "verified" && (
+      {/* 🟢 VERIFIED */}
+      {status === "verified" && (
         <Notification
           icon={<CheckCircle />}
           color="green"
-          title="Account Verified"
-          message="Your account is verified. You can now apply for placement drives."
+          message="Your account is verified. You can apply for drives."
         />
       )}
 
@@ -128,13 +181,16 @@ export default function StudentDashboard() {
               <th className="px-6 py-3 text-left">Drive Date</th>
             </tr>
           </thead>
+
           <tbody>
-            {upcomingDrives.map((d) => (
-              <tr key={d.id} className="border-t hover:bg-slate-50">
+            {upcomingDrives.map((d, i) => (
+              <tr key={i} className="border-t hover:bg-slate-50">
                 <td className="px-6 py-3 font-medium">{d.company}</td>
                 <td className="px-6 py-3">{d.location}</td>
-                <td className="px-6 py-3">{d.package}</td>
-                <td className="px-6 py-3">{d.date}</td>
+                <td className="px-6 py-3">{d.package} LPA</td>
+                <td className="px-6 py-3">
+                  {new Date(d.date).toLocaleDateString()}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -153,10 +209,12 @@ export default function StudentDashboard() {
               <th className="px-6 py-3 text-left">Round</th>
             </tr>
           </thead>
+
           <tbody>
-            {applications.map((a) => (
-              <tr key={a.id} className="border-t">
+            {recentApplications.map((a, i) => (
+              <tr key={i} className="border-t">
                 <td className="px-6 py-3">{a.company}</td>
+
                 <td className="px-6 py-3">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -170,6 +228,7 @@ export default function StudentDashboard() {
                     {a.status}
                   </span>
                 </td>
+
                 <td className="px-6 py-3">{a.round}</td>
               </tr>
             ))}
@@ -180,9 +239,9 @@ export default function StudentDashboard() {
   );
 }
 
-/* ---------- COMPONENTS ---------- */
+// ---------- COMPONENTS ----------
 
-function Notification({ icon, title, message, actionLabel, onAction, color }) {
+function Notification({ icon, message, actionLabel, onAction, color }) {
   const colorMap = {
     yellow: "bg-yellow-50 border-yellow-200 text-yellow-800",
     indigo: "bg-indigo-50 border-indigo-200 text-indigo-800",
@@ -238,37 +297,3 @@ function SectionHeader({ title }) {
     </div>
   );
 }
-
-/* ---------- MOCK DATA ---------- */
-
-const upcomingDrives = [
-  {
-    id: 1,
-    company: "Infosys",
-    location: "Bangalore",
-    package: "6 LPA",
-    date: "20 Feb 2026",
-  },
-  {
-    id: 2,
-    company: "TCS",
-    location: "Pune",
-    package: "7 LPA",
-    date: "25 Feb 2026",
-  },
-];
-
-const applications = [
-  {
-    id: 1,
-    company: "Google",
-    status: "Shortlisted",
-    round: "Technical Interview",
-  },
-  {
-    id: 2,
-    company: "Amazon",
-    status: "Applied",
-    round: "Online Test",
-  },
-];

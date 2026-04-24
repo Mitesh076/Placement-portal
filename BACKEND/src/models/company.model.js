@@ -7,54 +7,56 @@ const companySchema = new mongoose.Schema(
       ref: "User",
     },
     profilepic: {
-      type: String, // cloudinary
-      required: true,
+      type: String,
+      default: null,
     },
     name: {
       type: String,
-      required: true,
+      default: null,
     },
     industry: {
       type: String,
-      required: true,
+      default: null,
     },
     website: {
       type: String,
-      required: true,
+      default: null,
     },
     location: {
       type: String,
-      required: true,
+      default: null,
     },
     hrname: {
       type: String,
-      required: true,
+      default: null,
     },
     email: {
       type: String,
-      required: true,
+      default: null,
+      sparse: true,
       unique: true,
     },
     description: {
       type: String,
-      required: true,
+      default: null,
     },
     mobile: {
       type: Number,
-      required: true,
+      default: null,
+      sparse: true,
       unique: true,
     },
     sappeared: {
       type: Number,
-      required: true,
+      default: null,
     },
     splaced: {
       type: Number,
-      required: true,
+      default: null,
     },
   },
   { timestamps: true },
 );
-
-const Company = mongoose.model("Company", companySchema);
+const Company =
+  mongoose.models.Company || mongoose.model("Company", companySchema);
 export default Company;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   BookOpen,
   GraduationCap,
@@ -11,58 +12,127 @@ import {
 
 export default function Academic() {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [cgpa, setCgpa] = useState(0);
+  const [currentSem, setCurrentSem] = useState(null);
 
   const [academicData, setAcademicData] = useState({
-    tenth: {
-      board: "GSEB",
-      year: 2019,
-      percentage: "85%",
-      school: "ABC High School",
-    },
-    twelfth: {
-      board: "GSEB",
-      year: 2021,
-      percentage: "82%",
-      stream: "Science",
-      school: "XYZ Higher Secondary School",
-    },
-    graduation: {
-      course: "B.Tech",
-      branch: "Computer Engineering",
-      college: "ABC Institute of Technology",
-      cgpa: 8.2,
-      backlogs: 0,
-    },
-    semesters: [
-      { sem: 1, sgpa: 7.8, backlogs: 0 },
-      { sem: 2, sgpa: 8.0, backlogs: 0 },
-      { sem: 3, sgpa: 8.1, backlogs: 0 },
-      { sem: 4, sgpa: 8.3, backlogs: 0 },
-      { sem: 5, sgpa: 8.4, backlogs: 0 },
-    ],
+    tenth: {},
+    twelfth: {},
+    semesters: [],
   });
 
+  /* =========================
+     FETCH DATA
+  ========================= */
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:8000/api/student/academics",
+          { withCredentials: true },
+        );
+
+        const profile = await axios.get(
+          "http://localhost:8000/api/student/profile",
+          { withCredentials: true },
+        );
+
+        const semData = res.data.sem;
+
+        // 🔥 Always create semesters
+        const semesters = [
+          { sem: 1, sgpa: semData?.sem1 || "", backlogs: semData?.sem1b || 0 },
+          { sem: 2, sgpa: semData?.sem2 || "", backlogs: semData?.sem2b || 0 },
+          { sem: 3, sgpa: semData?.sem3 || "", backlogs: semData?.sem3b || 0 },
+          { sem: 4, sgpa: semData?.sem4 || "", backlogs: semData?.sem4b || 0 },
+          { sem: 5, sgpa: semData?.sem5 || "", backlogs: semData?.sem5b || 0 },
+          { sem: 6, sgpa: semData?.sem6 || "", backlogs: semData?.sem6b || 0 },
+          { sem: 7, sgpa: semData?.sem7 || "", backlogs: semData?.sem7b || 0 },
+          { sem: 8, sgpa: semData?.sem8 || "", backlogs: semData?.sem8b || 0 },
+        ];
+
+        setAcademicData({
+          tenth: res.data.tenth || {},
+          twelfth: res.data.twelth || {},
+          semesters,
+        });
+
+        setCgpa(profile.data.student?.cgpa || 0);
+        setCurrentSem(Number(profile.data.student?.sem) || null);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  /* =========================
+     HANDLE CHANGE
+  ========================= */
   const handleChange = (section, field, value, index = null) => {
     setAcademicData((prev) => {
       const updated = { ...prev };
+
       if (section === "semesters") {
-        updated.semesters[index][field] = value;
+        updated.semesters = [...updated.semesters];
+        updated.semesters[index] = {
+          ...updated.semesters[index],
+          [field]: value,
+        };
       } else {
-        updated[section][field] = value;
+        updated[section] = {
+          ...updated[section],
+          [field]: value,
+        };
       }
+
       return updated;
     });
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    console.log("Saved Academic Data:", academicData);
-    // 🔗 API call can be added here
+  /* =========================
+     SAVE DATA
+  ========================= */
+  const handleSave = async () => {
+    try {
+      await axios.post(
+        "http://localhost:8000/api/student/tenth",
+        academicData.tenth,
+        { withCredentials: true },
+      );
+
+      await axios.post(
+        "http://localhost:8000/api/student/twelth",
+        academicData.twelfth,
+        { withCredentials: true },
+      );
+
+      const semPayload = {};
+      academicData.semesters.forEach((s) => {
+        semPayload[`sem${s.sem}`] = s.sgpa;
+        semPayload[`sem${s.sem}b`] = s.backlogs;
+      });
+
+      await axios.post("http://localhost:8000/api/student/sem", semPayload, {
+        withCredentials: true,
+      });
+
+      setIsEditing(false);
+    } catch (err) {
+      console.log(err);
+    }
   };
+
+  if (loading) return <div className="p-10">Loading...</div>;
 
   return (
     <div className="space-y-6 w-full p-6 overflow-y-scroll">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">Academic Details</h2>
@@ -74,7 +144,7 @@ export default function Academic() {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"
           >
             <Pencil size={16} /> Edit
           </button>
@@ -82,13 +152,13 @@ export default function Academic() {
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg"
             >
               <Save size={16} /> Save
             </button>
             <button
               onClick={() => setIsEditing(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg"
+              className="flex items-center gap-2 px-4 py-2 border rounded-lg"
             >
               <X size={16} /> Cancel
             </button>
@@ -96,16 +166,19 @@ export default function Academic() {
         )}
       </div>
 
-      {/* Summary */}
+      {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <SummaryCard
           label="Current CGPA"
-          value={academicData.graduation.cgpa}
+          value={cgpa}
           icon={<GraduationCap />}
         />
         <SummaryCard
           label="Total Backlogs"
-          value={academicData.graduation.backlogs}
+          value={academicData.semesters.reduce(
+            (sum, s) => sum + Number(s.backlogs || 0),
+            0,
+          )}
           icon={<AlertTriangle />}
         />
         <SummaryCard
@@ -120,7 +193,7 @@ export default function Academic() {
         />
       </div>
 
-      {/* Sections */}
+      {/* 10th */}
       <Section title="10th Standard">
         <Field
           label="Board"
@@ -148,7 +221,8 @@ export default function Academic() {
         />
       </Section>
 
-      <Section title="12th Standard / Diploma">
+      {/* 12th */}
+      <Section title="12th Standard">
         <Field
           label="Board"
           value={academicData.twelfth.board}
@@ -181,38 +255,12 @@ export default function Academic() {
         />
       </Section>
 
-      <Section title="Graduation">
-        <Field
-          label="Course"
-          value={academicData.graduation.course}
-          isEditing={isEditing}
-          onChange={(v) => handleChange("graduation", "course", v)}
-        />
-        <Field
-          label="Branch"
-          value={academicData.graduation.branch}
-          isEditing={isEditing}
-          onChange={(v) => handleChange("graduation", "branch", v)}
-        />
-        <Field
-          label="College"
-          value={academicData.graduation.college}
-          isEditing={isEditing}
-          onChange={(v) => handleChange("graduation", "college", v)}
-        />
-        <Field
-          label="CGPA"
-          value={academicData.graduation.cgpa}
-          isEditing={isEditing}
-          onChange={(v) => handleChange("graduation", "cgpa", v)}
-        />
-      </Section>
-
-      {/* Semester Table */}
+      {/* SEM TABLE */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b font-semibold">
           Semester-wise Results
         </div>
+
         <table className="w-full text-sm">
           <thead className="bg-slate-50">
             <tr>
@@ -221,14 +269,30 @@ export default function Academic() {
               <th className="px-6 py-3 text-left">Backlogs</th>
             </tr>
           </thead>
+
           <tbody>
             {academicData.semesters.map((s, i) => (
-              <tr key={s.sem} className="border-t">
-                <td className="px-6 py-3">Semester {s.sem}</td>
+              <tr
+                key={i}
+                className={`border-t ${
+                  currentSem === s.sem
+                    ? "bg-indigo-100 font-semibold"
+                    : "hover:bg-slate-50"
+                }`}
+              >
+                <td className="px-6 py-3">
+                  Semester {s.sem}
+                  {currentSem === s.sem && (
+                    <span className="ml-2 text-xs bg-indigo-600 text-white px-2 py-1 rounded">
+                      Current
+                    </span>
+                  )}
+                </td>
+
                 <td className="px-6 py-3">
                   {isEditing ? (
                     <input
-                      value={s.sgpa}
+                      value={s.sgpa || ""}
                       onChange={(e) =>
                         handleChange("semesters", "sgpa", e.target.value, i)
                       }
@@ -238,7 +302,20 @@ export default function Academic() {
                     s.sgpa
                   )}
                 </td>
-                <td className="px-6 py-3">{s.backlogs}</td>
+
+                <td className="px-6 py-3">
+                  {isEditing ? (
+                    <input
+                      value={s.backlogs || ""}
+                      onChange={(e) =>
+                        handleChange("semesters", "backlogs", e.target.value, i)
+                      }
+                      className="border rounded px-2 py-1 w-20"
+                    />
+                  ) : (
+                    s.backlogs
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -248,17 +325,16 @@ export default function Academic() {
   );
 }
 
-/* ---------- Helpers ---------- */
-
+/* COMPONENTS */
 function SummaryCard({ label, value, icon }) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-5 flex items-center gap-4">
-      <div className="w-12 h-12 bg-indigo-100 text-indigo-600 flex items-center justify-center rounded-lg">
+      <div className="w-12 h-12 bg-indigo-100 flex items-center justify-center rounded-lg">
         {icon}
       </div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-lg font-semibold">{value}</p>
+        <p className="text-lg font-semibold">{value || "-"}</p>
       </div>
     </div>
   );
@@ -270,7 +346,7 @@ function Section({ title, children }) {
       <h3 className="font-semibold mb-4 flex items-center gap-2">
         <BookOpen size={18} /> {title}
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
+      <div className="grid md:grid-cols-2 gap-4">{children}</div>
     </div>
   );
 }
@@ -281,12 +357,12 @@ function Field({ label, value, isEditing, onChange }) {
       <p className="text-xs text-slate-500">{label}</p>
       {isEditing ? (
         <input
-          value={value}
+          value={value || ""}
           onChange={(e) => onChange(e.target.value)}
           className="border rounded px-2 py-1 w-full"
         />
       ) : (
-        <p className="font-medium">{value}</p>
+        <p className="font-medium">{value || "-"}</p>
       )}
     </div>
   );

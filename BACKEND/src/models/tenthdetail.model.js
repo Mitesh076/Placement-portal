@@ -9,7 +9,7 @@ const tenthdetailSchema = new mongoose.Schema(
       unique: true,
     },
     board: {
-      type: String, // cloudinary
+      type: String, 
       required: true,
     },
     percentage: {

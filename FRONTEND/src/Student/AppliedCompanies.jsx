@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Search,
   Building2,
@@ -15,59 +16,48 @@ export default function AppliedCompanies() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
-  const companies = [
-    {
-      id: 1,
-      name: "Google",
-      role: "Software Engineer",
-      appliedDate: "12 Jan 2026",
-      status: "Selected",
-      roundsCleared: 4,
-      totalRounds: 4,
-      nextRound: null,
-      nextRoundDate: null,
-    },
-    {
-      id: 2,
-      name: "Infosys",
-      role: "System Engineer",
-      appliedDate: "18 Jan 2026",
-      status: "Shortlisted",
-      roundsCleared: 2,
-      totalRounds: 4,
-      nextRound: "Technical Interview",
-      nextRoundDate: "28 Jan 2026",
-    },
-    {
-      id: 3,
-      name: "TCS",
-      role: "Assistant System Engineer",
-      appliedDate: "20 Jan 2026",
-      status: "Applied",
-      roundsCleared: 0,
-      totalRounds: 3,
-      nextRound: "Online Test",
-      nextRoundDate: "25 Jan 2026",
-    },
-    {
-      id: 4,
-      name: "Amazon",
-      role: "Frontend Developer",
-      appliedDate: "22 Jan 2026",
-      status: "Rejected",
-      roundsCleared: 1,
-      totalRounds: 4,
-      nextRound: null,
-      nextRoundDate: null,
-    },
-  ];
+  const [companies, setCompanies] = useState([]);
+  const [stats, setStats] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem("token"); // ✅ get token
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const config = {
+          withCredentials: true, // ✅ use cookies instead of token
+        };
+
+        const [statsRes, companiesRes] = await Promise.all([
+          axios.get("http://localhost:8000/api/student/placementstats", config),
+          axios.get(
+            "http://localhost:8000/api/student/appliedcompanies",
+            config,
+          ),
+        ]);
+
+        setStats(statsRes.data);
+        setCompanies(companiesRes.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredCompanies = companies.filter((c) => {
+    const searchText = search.toLowerCase();
+
     const matchSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.role.toLowerCase().includes(search.toLowerCase());
+      c.companyName?.toLowerCase().includes(searchText) ||
+      c.role?.toLowerCase().includes(searchText);
 
     const matchFilter = filter === "All" || c.status === filter;
+
     return matchSearch && matchFilter;
   });
 
@@ -94,7 +84,8 @@ export default function AppliedCompanies() {
         return <Clock size={16} />;
     }
   };
-  function StatCard({ icon, label, value, highlight }) {
+
+  function StatCard({ icon, label, value }) {
     return (
       <div className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-4">
         <div className="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
@@ -102,36 +93,44 @@ export default function AppliedCompanies() {
         </div>
         <div>
           <p className="text-xs text-slate-500">{label}</p>
-          <p
-            className={`text-lg font-semibold ${
-              highlight ? "text-orange-600" : "text-slate-800"
-            }`}
-          >
-            {value}
-          </p>
+          <p className="text-lg font-semibold text-slate-800">{value}</p>
         </div>
       </div>
     );
   }
 
+  if (loading) {
+    return <p className="p-6">Loading applications...</p>;
+  }
+
   return (
     <div className="space-y-6 w-full p-6">
-      <div>
-        <h2 className="text-xl font-semibold">Applied Companies </h2>
-        <p className="text-sm text-slate-500">
-          Overview of Applied for companies
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard icon={<Briefcase />} label="Total Companies" value="12" />
-
-        <StatCard icon={<Building2 />} label="Eligible Companies" value="12" />
-        <StatCard icon={<Briefcase />} label="Applied Companies" value="6" />
-      </div>
       {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold">Applied Companies</h2>
+        <p className="text-sm text-slate-500">Overview of your applications</p>
+      </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard
+          icon={<Briefcase />}
+          label="Total Companies"
+          value={stats.total || 0}
+        />
+        <StatCard
+          icon={<Building2 />}
+          label="Eligible Companies"
+          value={stats.eligible || 0}
+        />
+        <StatCard
+          icon={<Briefcase />}
+          label="Applied Companies"
+          value={stats.applied || 0}
+        />
+      </div>
+
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">List of Companies</h2>
         <span className="text-sm text-slate-500">
@@ -180,69 +179,68 @@ export default function AppliedCompanies() {
               <th className="px-6 py-3 text-left">Next Round</th>
               <th className="px-6 py-3 text-left">Next Round Date</th>
               <th className="px-6 py-3 text-left">Status</th>
-              <th className="px-6 py-3 text-left">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredCompanies.map((c) => (
-              <tr key={c.id} className="border-t hover:bg-slate-50">
-                <td className="px-6 py-4 flex items-center gap-2 font-medium">
-                  <Building2 size={16} className="text-indigo-600" />
-                  {c.name}
-                </td>
-
-                <td className="px-6 py-4">{c.role}</td>
-
-                <td className="px-6 py-4 flex items-center gap-2">
-                  <Calendar size={14} />
-                  {c.appliedDate}
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className="h-2 bg-indigo-600 rounded-full"
-                      style={{
-                        width: `${(c.roundsCleared / c.totalRounds) * 100}%`,
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {c.roundsCleared}/{c.totalRounds} rounds
-                  </p>
-                </td>
-
-                <td className="px-6 py-4 font-medium">{c.nextRound || "—"}</td>
-
-                <td className="px-6 py-4 text-slate-600">
-                  {c.nextRoundDate || "—"}
-                </td>
-
-                <td className="px-6 py-4">
-                  <span
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusBadge(
-                      c.status,
-                    )}`}
-                  >
-                    {statusIcon(c.status)}
-                    {c.status}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 flex gap-2">
-                  <button className="p-2 rounded-lg border hover:bg-slate-100">
-                    <Eye size={16} />
-                  </button>
-
-                  {c.status === "Applied" && (
-                    <button className="p-2 rounded-lg border hover:bg-red-50 text-red-600">
-                      <Trash2 size={16} />
-                    </button>
-                  )}
+            {filteredCompanies.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="text-center py-6 text-slate-500">
+                  No applications found
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredCompanies.map((c) => (
+                <tr key={c.id} className="border-t hover:bg-slate-50">
+                  <td className="px-6 py-4 flex items-center gap-2 font-medium">
+                    <Building2 size={16} className="text-indigo-600" />
+                    {c.companyName}
+                  </td>
+
+                  <td className="px-6 py-4">{c.role}</td>
+
+                  <td className="px-6 py-4 flex items-center gap-2">
+                    <Calendar size={14} />
+                    {c.appliedDate
+                      ? new Date(c.appliedDate).toLocaleDateString()
+                      : "-"}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div
+                        className="h-2 bg-indigo-600 rounded-full"
+                        style={{ width: `${c.progressPercent}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {c.roundsCleared}/{c.totalRounds} rounds
+                    </p>
+                  </td>
+
+                  <td className="px-6 py-4 font-medium">
+                    {c.nextRound || "-"}
+                  </td>
+
+                  <td className="px-6 py-4 text-slate-600">
+                    {c.nextRoundDate
+                      ? new Date(c.nextRoundDate).toLocaleDateString()
+                      : "-"}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusBadge(
+                        c.status,
+                      )}`}
+                    >
+                      {statusIcon(c.status)}
+                      {c.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

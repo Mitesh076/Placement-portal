@@ -5,6 +5,8 @@ import {
   Settings,
   CheckCircle,
   Layers,
+  Book,
+  PlusSquare,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -37,20 +39,26 @@ export default function CompanySidebar() {
               Company Dashboard
             </NavLink>
           </li>
-
           <li>
+            <NavLink to="/company/drives" className={linkClass}>
+              <PlusSquare size={18} />
+              Add Drives
+            </NavLink>
+          </li>
+
+          {/* <li>
             <NavLink to="/company/applicants" className={linkClass}>
               <Users size={18} />
               Applicants
             </NavLink>
-          </li>
+          </li> */}
 
-          <li>
+          {/* <li>
             <NavLink to="/company/selectedstudents" className={linkClass}>
               <CheckCircle size={18} />
               Selected Students
             </NavLink>
-          </li>
+          </li> */}
 
           <li>
             <NavLink to="/company/rounds" className={linkClass}>
@@ -59,12 +67,12 @@ export default function CompanySidebar() {
             </NavLink>
           </li>
 
-          <li>
+          {/* <li>
             <NavLink to="/company/settings" className={linkClass}>
               <Settings size={18} />
               Settings
             </NavLink>
-          </li>
+          </li> */}
         </ul>
 
         {/* Footer */}

@@ -83,7 +83,6 @@ function StudentTable({ title, students, toggleStatus }) {
             <th className="px-6 py-3 text-left">Department</th>
             <th className="px-6 py-3 text-left">Companies Appeared</th>
             <th className="px-6 py-3 text-left">Status</th>
-            <th className="px-6 py-3 text-left">Toggle Status</th>
           </tr>
         </thead>
 
@@ -110,19 +109,6 @@ function StudentTable({ title, students, toggleStatus }) {
                     <XCircle size={16} /> Unplaced
                   </span>
                 )}
-              </td>
-
-              <td className="px-6 py-3">
-                <button
-                  onClick={() => toggleStatus(student._id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                    student.placed
-                      ? "bg-red-100 text-red-600"
-                      : "bg-green-100 text-green-600"
-                  }`}
-                >
-                  {student.placed ? "Mark Unplaced" : "Mark Placed"}
-                </button>
               </td>
             </tr>
           ))}

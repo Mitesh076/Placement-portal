@@ -3,21 +3,32 @@ import { Building2, Users, Send, Mail, CheckCircle } from "lucide-react";
 
 export default function PostCompany() {
   const [drives, setDrives] = useState([]);
-  const [driveId, setDriveId] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState(null);
   const [students, setStudents] = useState([]);
-
-  const [selectedDrive, setSelectedDrive] = useState(null);
   const [drivePosted, setDrivePosted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Drive form fields
+  const [driveForm, setDriveForm] = useState({
+    roles: "",
+    pack: "",
+    ebranches: "",
+    drivedate: "",
+    jobtype: "Full-time",
+    mincgpa: "",
+    bond: "",
+    lastdate: "",
+  });
 
   useEffect(() => {
-    fetchDrives();
+    fetchApprovedCompanies();
   }, []);
 
-  // ✅ FETCH ALL DRIVES (NOT COMPANIES)
-  const fetchDrives = async () => {
+  const fetchApprovedCompanies = async () => {
     try {
       const res = await fetch(
         "http://localhost:8000/api/admin/approved-companies",
+        { credentials: "include" },
       );
       const data = await res.json();
       setDrives(data);
@@ -26,49 +37,86 @@ export default function PostCompany() {
     }
   };
 
-  // ✅ SELECT DRIVE (NO API CALL)
-  const handleSelectDrive = (drive) => {
-    console.log("Selected Drive:", drive); //
-    setSelectedDrive(drive);
-    setDriveId(drive._id); // 🔥 IMPORTANT
+  const handleSelectCompany = (company) => {
+    setSelectedCompany(company);
     setDrivePosted(false);
+    setStudents([]);
+    // ✅ Pre-fill roles and pack from approved company data
+    setDriveForm((prev) => ({
+      ...prev,
+      roles: company.roles || "",
+      pack: company.pack || "",
+    }));
   };
 
-  // ✅ FETCH ELIGIBLE STUDENTS
+  // ✅ POST DRIVE + FETCH ELIGIBLE STUDENTS
   const handlePostDrive = async () => {
-    if (!driveId) {
-      alert("Please select drive first");
+    if (!selectedCompany) {
+      alert("Please select a company first");
       return;
     }
 
-    const res = await fetch(
-      `http://localhost:8000/api/admin/drive/eligible/${driveId}`,
-    );
+    // ✅ Validate required fields
+    const required = [
+      "roles",
+      "pack",
+      "ebranches",
+      "drivedate",
+      "mincgpa",
+      "bond",
+      "lastdate",
+    ];
+    for (const field of required) {
+      if (!driveForm[field]) {
+        alert(`Please fill in: ${field}`);
+        return;
+      }
+    }
 
-    const data = await res.json();
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/admin/drive/post/${selectedCompany._id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(driveForm),
+        },
+      );
 
-    console.log("Students:", data);
+      const data = await res.json();
 
-    // ✅ FIX HERE
-    setStudents(Array.isArray(data) ? data : data.students || []);
+      if (!res.ok) {
+        alert(data.message || "Failed to post drive");
+        return;
+      }
 
-    setDrivePosted(true);
+      setStudents(data.eligible || []);
+      setDrivePosted(true);
+
+      // ✅ Refresh companies list (posted company will disappear since visited=true)
+      fetchApprovedCompanies();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6 p-6 w-full">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-semibold">Post Company Drive</h2>
         <p className="text-sm text-slate-500">
-          Select drive, view students, and send data to company
+          Select a verified company, fill drive details, and notify eligible
+          students
         </p>
       </div>
 
-      {/* DRIVES LIST */}
+      {/* APPROVED COMPANIES LIST */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <SectionHeader title="Active Drives" />
-
+        <SectionHeader title="Verified Companies (Not Yet Visited)" />
         <table className="w-full text-sm">
           <thead className="bg-slate-50">
             <tr>
@@ -79,97 +127,214 @@ export default function PostCompany() {
               <th className="px-6 py-3 text-left">Action</th>
             </tr>
           </thead>
-
           <tbody>
-            {drives.map((d) => (
-              <tr key={d._id} className="border-t hover:bg-slate-50">
-                <td className="px-6 py-3 font-medium flex items-center gap-2">
-                  <Building2 size={16} /> {d.name}
-                </td>
-                <td className="px-6 py-3">{d.roles}</td>
-                <td className="px-6 py-3">{d.pack}</td>
-                <td className="px-6 py-3">{d.location}</td>
-                <td className="px-6 py-3">
-                  <button
-                    onClick={() => handleSelectDrive(d)}
-                    className="px-3 py-1 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-                  >
-                    Select Drive
-                  </button>
+            {drives.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-6 py-6 text-center text-slate-400"
+                >
+                  No verified companies available
                 </td>
               </tr>
-            ))}
+            ) : (
+              drives.map((d) => (
+                <tr
+                  key={d._id}
+                  className={`border-t hover:bg-slate-50 ${
+                    selectedCompany?._id === d._id ? "bg-indigo-50" : ""
+                  }`}
+                >
+                  <td className="px-6 py-3 font-medium flex items-center gap-2">
+                    <Building2 size={16} /> {d.name}
+                  </td>
+                  <td className="px-6 py-3">{d.roles}</td>
+                  <td className="px-6 py-3">{d.pack}</td>
+                  <td className="px-6 py-3">{d.location}</td>
+                  <td className="px-6 py-3">
+                    <button
+                      onClick={() => handleSelectCompany(d)}
+                      className="px-3 py-1 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                      Select
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* SELECTED DRIVE DETAILS */}
-      {selectedDrive && (
+      {/* DRIVE DETAILS FORM */}
+      {selectedCompany && !drivePosted && (
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
           <h3 className="font-semibold text-lg flex items-center gap-2">
-            <CheckCircle className="text-green-600" />
-            Selected Drive Details
+            <CheckCircle className="text-green-600" size={20} />
+            Drive Details for {selectedCompany.name}
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-            <Detail label="Company" value={selectedDrive.name} />
-            <Detail label="Role" value={selectedDrive.roles} />
-            <Detail label="Package" value={selectedDrive.pack} />
-            <Detail label="Location" value={selectedDrive.location} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label className="text-xs text-slate-500">Role</label>
+              <input
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                value={driveForm.roles}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, roles: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Package (LPA)</label>
+              <input
+                type="number"
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                value={driveForm.pack}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, pack: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">
+                Eligible Branches (e.g. CE,IT)
+              </label>
+              <input
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                placeholder="CE,IT"
+                value={driveForm.ebranches}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, ebranches: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Minimum CGPA</label>
+              <input
+                type="number"
+                step="0.1"
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                value={driveForm.mincgpa}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, mincgpa: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Drive Date</label>
+              <input
+                type="date"
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                value={driveForm.drivedate}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, drivedate: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">
+                Last Date to Apply
+              </label>
+              <input
+                type="date"
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                value={driveForm.lastdate}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, lastdate: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Job Type</label>
+              <select
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                value={driveForm.jobtype}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, jobtype: e.target.value })
+                }
+              >
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Internship">Internship</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">
+                Bond (e.g. 2 years / None)
+              </label>
+              <input
+                className="w-full border rounded-lg px-3 py-2 mt-1"
+                placeholder="None"
+                value={driveForm.bond}
+                onChange={(e) =>
+                  setDriveForm({ ...driveForm, bond: e.target.value })
+                }
+              />
+            </div>
           </div>
 
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handlePostDrive}
-              disabled={!driveId}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                driveId
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-400 cursor-not-allowed text-white"
-              }`}
-            >
-              <Mail size={16} /> Post Drive & Notify Students
-            </button>
-          </div>
+          <button
+            onClick={handlePostDrive}
+            disabled={loading}
+            className="mt-4 px-4 py-2 rounded-lg flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+          >
+            <Mail size={16} />
+            {loading ? "Posting..." : "Post Drive & Notify Students"}
+          </button>
         </div>
       )}
 
-      {/* STUDENTS */}
+      {/* ELIGIBLE STUDENTS */}
       {drivePosted && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <SectionHeader title="Eligible Students" />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
             <StatCard
-              label="Total Students"
+              label="Total Eligible"
               value={students.length}
               icon={<Users />}
             />
             <StatCard
-              label="Eligible Students"
-              value={students.length}
+              label="Company"
+              value={selectedCompany?.name}
               icon={<CheckCircle />}
             />
-            <StatCard label="Data Sent" value="No" icon={<Send />} />
+            <StatCard label="Drive Posted" value="Yes" icon={<Send />} />
           </div>
 
           <table className="w-full text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left">Student Name</th>
+                <th className="px-6 py-3 text-left">Enrollment No</th>
+                <th className="px-6 py-3 text-left">Name</th>
                 <th className="px-6 py-3 text-left">Branch</th>
                 <th className="px-6 py-3 text-left">CGPA</th>
+                <th className="px-6 py-3 text-left">Email</th>
               </tr>
             </thead>
-
             <tbody>
-              {students.map((s) => (
-                <tr key={s._id} className="border-t">
-                  <td className="px-6 py-3 font-medium">{s.name}</td>
-                  <td className="px-6 py-3">{s.branch}</td>
-                  <td className="px-6 py-3">{s.cgpa}</td>
+              {students.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-6 text-center text-slate-400"
+                  >
+                    No eligible students found
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                students.map((s) => (
+                  <tr key={s._id} className="border-t hover:bg-slate-50">
+                    <td className="px-6 py-3">{s.erno}</td>
+                    <td className="px-6 py-3 font-medium">{s.name}</td>
+                    <td className="px-6 py-3">{s.branch}</td>
+                    <td className="px-6 py-3">{s.cgpa}</td>
+                    <td className="px-6 py-3">{s.email}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -179,7 +344,6 @@ export default function PostCompany() {
 }
 
 /* COMPONENTS */
-
 function SectionHeader({ title }) {
   return (
     <div className="h-14 px-6 flex items-center border-b">

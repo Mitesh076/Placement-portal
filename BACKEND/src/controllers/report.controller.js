@@ -8,18 +8,13 @@ export const getReportStats = async (req, res) => {
   try {
     const { branch, batch } = req.query;
 
-    const filter = {};
+    const studentFilter = {};
+    if (branch && branch !== "All") studentFilter.branch = branch;
+    if (batch && batch !== "All") studentFilter.batch = Number(batch);
 
-    if (branch && branch !== "All") {
-      filter.branch = branch;
-    }
+    const totalStudents = await Student.countDocuments(studentFilter);
 
-    if (batch && batch !== "All") {
-      filter.batch = Number(batch);
-    }
-
-    const totalStudents = await Student.countDocuments(filter);
-
+    // ✅ Count students whose PlacementStatus has status "Placed"
     const placedStudents = await PlacementStatus.countDocuments({
       status: "Placed",
     });
@@ -27,6 +22,7 @@ export const getReportStats = async (req, res) => {
     const visitedCompanies = await CompanyData.countDocuments({
       visited: true,
     });
+
     const placementPercentage =
       totalStudents === 0
         ? 0
@@ -39,8 +35,8 @@ export const getReportStats = async (req, res) => {
       placementPercentage,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
-
 export default { getReportStats };

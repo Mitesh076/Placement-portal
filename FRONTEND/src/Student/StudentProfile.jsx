@@ -1,22 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Camera } from "lucide-react";
 
 export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isNewProfile, setIsNewProfile] = useState(false);
 
-  const [profileData, setProfileData] = useState({
-    fullName: "Student User",
-    erno: "123456789",
-    gender: "Male",
-    sem: 8,
-    department: "Computer Engineering",
-    cgpa: 8.77,
-    email: "Student@college.edu",
-    mobile: "+91 9876543210",
+  const [profileData, setProfileData] = useState({});
+
+  const [formData, setFormData] = useState({
+    name: "",
+    erno: "",
+    gender: "M",
+    sem: 1,
+    branch: "CE",
+    cgpa: "",
+    email: "",
+    mobile: "",
   });
 
-  const [formData, setFormData] = useState(profileData);
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
 
+  /* ===========================
+     FETCH PROFILE
+  =========================== */
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:8000/api/student/profile",
+          {
+            withCredentials: true,
+          },
+        );
+
+        const student = res.data.student; // ✅ FIX
+
+        if (student) {
+          setProfileData(student); // ✅ FIX
+          setFormData(student); // ✅ FIX
+          setPreview(student.profilepic); // ✅ FIX
+          setIsNewProfile(false);
+        }
+      } catch (error) {
+        if (error.response?.status === 404) {
+          setIsNewProfile(true);
+        } else {
+          console.log(error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  /* ===========================
+     HANDLE INPUT CHANGE
+  =========================== */
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -24,18 +68,87 @@ export default function StudentProfile() {
     });
   };
 
-  const handleSave = () => {
-    setProfileData(formData);
-    setIsEditing(false);
+  /* ===========================
+     HANDLE IMAGE CHANGE
+  =========================== */
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  /* ===========================
+     SAVE PROFILE (CREATE/UPDATE)
+  =========================== */
+  const handleSave = async () => {
+    try {
+      const form = new FormData();
+
+      Object.keys(formData).forEach((key) => {
+        form.append(key, formData[key]);
+      });
+
+      if (image) {
+        form.append("profilepic", image);
+      }
+
+      let res;
+
+      if (isNewProfile) {
+        // CREATE
+        res = await axios.post(
+          "http://localhost:8000/api/student/profile",
+          form,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+      } else {
+        // UPDATE
+        res = await axios.put(
+          "http://localhost:8000/api/student/profile",
+          form,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+      }
+
+      console.log("DATA:", res.data);
+      const data = res.data.student;
+
+      setProfileData(data);
+      setFormData(data);
+      setPreview(data.profilepic);
+      setIsEditing(false);
+      setIsNewProfile(false);
+      setImage(null);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleCancel = () => {
     setFormData(profileData);
+    setPreview(profileData.profilepic);
     setIsEditing(false);
   };
 
+  if (loading) {
+    return <div className="p-10 text-lg">Loading profile...</div>;
+  }
+
   return (
-    <div className="w-full  mx-auto space-y-8 p-10 overflow-y-scroll">
+    <div className="w-full mx-auto space-y-8 p-10 overflow-y-scroll">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -48,7 +161,7 @@ export default function StudentProfile() {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-indigo-700"
+            className="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg font-semibold"
           >
             Edit Profile
           </button>
@@ -64,21 +177,45 @@ export default function StudentProfile() {
 
       {/* Profile Card */}
       <div className="bg-white p-10 rounded-2xl shadow flex items-center gap-10">
-        <div className="relative">
-          <div className="w-40 h-40 rounded-full bg-slate-200 flex items-center justify-center text-lg text-slate-500">
-            Photo
-          </div>
+        <div className="relative w-40 h-40 rounded-full border border-black overflow-hidden flex items-center justify-center">
+          {preview ? (
+            <img
+              src={preview}
+              alt="profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-500 font-semibold text-lg">
+              Profile
+            </div>
+          )}
 
           {isEditing && (
-            <button className="absolute bottom-2 right-2 bg-indigo-600 text-white p-3 rounded-full">
-              <Camera size={20} />
-            </button>
+            <>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                id="upload"
+              />
+              <label
+                htmlFor="upload"
+                className="absolute bottom-2 right-2 bg-indigo-600 text-white p-3 rounded-full cursor-pointer"
+              >
+                <Camera size={20} />
+              </label>
+            </>
           )}
         </div>
 
         <div>
-          <h3 className="text-2xl font-semibold">{profileData.fullName}</h3>
-          <p className="text-lg text-slate-500">{profileData.email}</p>
+          <h3 className="text-2xl font-semibold">
+            {profileData.name || "No Name"}
+          </h3>
+          <p className="text-lg text-slate-500">
+            {profileData.email || "No Email"}
+          </p>
         </div>
       </div>
 
@@ -88,19 +225,19 @@ export default function StudentProfile() {
 
         {!isEditing ? (
           <div className="grid md:grid-cols-3 gap-8 text-lg">
-            <Info label="Full Name" value={profileData.fullName} />
-            <Info label="Enrollment No " value={profileData.erno} />
+            <Info label="Full Name" value={profileData.name} />
+            <Info label="Enrollment No" value={profileData.erno} />
             <Info label="Gender" value={profileData.gender} />
             <Info label="Semester" value={profileData.sem} />
-            <Info label="Department" value={profileData.department} />
+            <Info label="Department" value={profileData.branch} />
             <Info label="CGPA" value={profileData.cgpa} />
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-8">
             <Input
               label="Full Name"
-              name="fullName"
-              value={formData.fullName}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
             />
             <Input
@@ -115,7 +252,7 @@ export default function StudentProfile() {
               name="gender"
               value={formData.gender}
               onChange={handleChange}
-              options={["Male", "Female", "Other"]}
+              options={["M", "F", "O"]}
             />
             <Select
               label="Semester"
@@ -124,6 +261,7 @@ export default function StudentProfile() {
               onChange={handleChange}
               options={[1, 2, 3, 4, 5, 6, 7, 8]}
             />
+
             <Input
               label="CGPA"
               name="cgpa"
@@ -133,44 +271,34 @@ export default function StudentProfile() {
 
             <Select
               label="Department"
-              name="department"
-              value={formData.department}
+              name="branch"
+              value={formData.branch}
               onChange={handleChange}
-              options={[
-                "Computer Engineering",
-                "Information Technology",
-                "Mechanical Engineering",
-                "Civil Engineering",
-                "Electrical Engineering",
-                "Electronics & Communication",
-                "Artificial Intelligence",
-                "Data Science",
-              ]}
+              options={["CE", "IT"]}
             />
           </div>
         )}
       </div>
 
-      {/* Contact Information */}
+      {/* Contact */}
       <div className="bg-white p-10 rounded-2xl shadow">
         <h3 className="text-2xl font-semibold mb-6">Contact Information</h3>
 
         {!isEditing ? (
           <div className="grid md:grid-cols-3 gap-8 text-lg">
-            <Info label="Email Address" value={profileData.email} />
-            <Info label="Mobile Number" value={profileData.mobile} />
+            <Info label="Email" value={profileData.email} />
+            <Info label="Mobile" value={profileData.mobile} />
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-8">
             <Input
-              label="Email Address"
+              label="Email"
               name="email"
               value={formData.email}
               onChange={handleChange}
             />
-
             <Input
-              label="Mobile Number"
+              label="Mobile"
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
@@ -179,12 +307,12 @@ export default function StudentProfile() {
         )}
       </div>
 
-      {/* Save Button */}
+      {/* Save */}
       {isEditing && (
         <div className="flex justify-end">
           <button
             onClick={handleSave}
-            className="bg-indigo-600 text-white px-10 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-700"
+            className="bg-indigo-600 text-white px-10 py-4 rounded-xl text-lg font-semibold"
           >
             Save Profile
           </button>
@@ -194,38 +322,35 @@ export default function StudentProfile() {
   );
 }
 
-/* ---------- INPUT COMPONENT ---------- */
-
-function Input({ label, name, value, onChange, type = "text" }) {
+/* INPUT */
+function Input({ label, name, value, onChange }) {
   return (
     <div>
       <label className="text-base font-medium">{label}</label>
       <input
-        type={type}
         name={name}
-        value={value}
+        value={value || ""}
         onChange={onChange}
-        className="w-full mt-2 p-4 text-lg border rounded-xl focus:ring-2 focus:ring-indigo-500"
+        className="w-full mt-2 p-4 border rounded-xl"
       />
     </div>
   );
 }
 
-/* ---------- SELECT COMPONENT ---------- */
-
+/* SELECT */
 function Select({ label, name, value, onChange, options }) {
   return (
     <div>
       <label className="text-base font-medium">{label}</label>
       <select
         name={name}
-        value={value}
+        value={value || ""}
         onChange={onChange}
-        className="w-full mt-2 p-4 text-lg border rounded-xl focus:ring-2 focus:ring-indigo-500"
+        className="w-full mt-2 p-4 border rounded-xl"
       >
-        {options.map((option, index) => (
-          <option key={index} value={option}>
-            {option}
+        {options.map((opt, i) => (
+          <option key={i} value={opt}>
+            {opt}
           </option>
         ))}
       </select>
@@ -233,13 +358,12 @@ function Select({ label, name, value, onChange, options }) {
   );
 }
 
-/* ---------- VIEW COMPONENT ---------- */
-
+/* VIEW */
 function Info({ label, value }) {
   return (
     <div>
       <p className="text-slate-500 text-sm">{label}</p>
-      <p className="font-semibold text-lg">{value}</p>
+      <p className="font-semibold text-lg">{value || "-"}</p>
     </div>
   );
 }
