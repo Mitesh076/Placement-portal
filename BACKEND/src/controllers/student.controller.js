@@ -1113,6 +1113,7 @@ export const acceptOffer = async (req, res) => {
         status: "Placed",
         pcname: offer.cname,
         pack: offer.pack,
+        comp: offer.company,
       },
       { new: true, upsert: true },
     );

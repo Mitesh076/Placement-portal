@@ -81,7 +81,7 @@ function StudentTable({ title, students, toggleStatus }) {
           <tr>
             <th className="px-6 py-3 text-left">Name</th>
             <th className="px-6 py-3 text-left">Department</th>
-            <th className="px-6 py-3 text-left">Companies Appeared</th>
+            <th className="px-6 py-3 text-left">Drives Appeared</th>
             <th className="px-6 py-3 text-left">Status</th>
           </tr>
         </thead>

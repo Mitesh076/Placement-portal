@@ -39,6 +39,7 @@ export default function CompanyDashboard() {
     fetchAll();
   }, []);
 
+  // ✅ VERIFY COMPANY
   const handleVerify = async () => {
     try {
       await axios.post(
@@ -52,11 +53,33 @@ export default function CompanyDashboard() {
     }
   };
 
+  // ✅ COMPLETE PLACEMENT PROCESS
+  const handleCompletePlacement = async () => {
+    try {
+      await axios.post(
+        "http://localhost:8000/api/company/complete-placement",
+        {},
+        { withCredentials: true },
+      );
+
+      alert("Placement process completed successfully");
+
+      // update UI instead of reload (better UX)
+      setStats((prev) => ({
+        ...prev,
+        visited: true,
+      }));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to complete process");
+    }
+  };
+
   if (loading) return <div className="p-6 text-slate-500">Loading...</div>;
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   const isVerified = stats?.isVerified;
   const isProfileComplete = stats?.profileCompletion === 100;
+  const isCompleted = stats?.visited;
 
   return (
     <div className="space-y-6 w-full p-6">
@@ -67,7 +90,7 @@ export default function CompanyDashboard() {
             {stats?.companyName || "Company Dashboard"}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Manage verification and view selected students
+            Manage verification and placement process
           </p>
         </div>
 
@@ -138,6 +161,23 @@ export default function CompanyDashboard() {
         />
       </div>
 
+      {/* ✅ COMPLETE PLACEMENT BUTTON */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleCompletePlacement}
+          disabled={!isVerified || isCompleted}
+          className={`px-5 py-2 rounded-lg text-white font-medium ${
+            isCompleted
+              ? "bg-green-600 cursor-not-allowed"
+              : isVerified
+                ? "bg-indigo-600 hover:bg-indigo-700"
+                : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          {isCompleted ? "Placement Completed" : "Complete Placement Process"}
+        </button>
+      </div>
+
       {/* SELECTED STUDENTS TABLE */}
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         <div className="h-14 px-6 flex items-center border-b font-semibold text-indigo-700">
@@ -159,9 +199,11 @@ export default function CompanyDashboard() {
                 <th className="px-6 py-3 text-left">Profile</th>
                 <th className="px-6 py-3 text-left">Student Name</th>
                 <th className="px-6 py-3 text-left">Email</th>
+                <th className="px-6 py-3 text-left">Branch</th>
+                <th className="px-6 py-3 text-left">CGPA</th>
                 <th className="px-6 py-3 text-left">Role</th>
-                <th className="px-6 py-3 text-left">Drive</th>
-                <th className="px-6 py-3 text-left">Rounds</th>
+                <th className="px-6 py-3 text-left">Pack</th>
+                <th className="px-6 py-3 text-left">Bond</th>
               </tr>
             </thead>
             <tbody>
@@ -169,23 +211,18 @@ export default function CompanyDashboard() {
                 <tr key={s.appliedId} className="border-t hover:bg-indigo-50">
                   <td className="px-6 py-3">
                     <img
-                      src={
-                        s.student?.profilePic ||
-                        "https://via.placeholder.com/40"
-                      }
+                      src={s.profilepic || "https://via.placeholder.com/40"}
                       alt="profile"
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   </td>
-                  <td className="px-6 py-3 font-medium">
-                    {s.student?.name || "—"}
-                  </td>
-                  <td className="px-6 py-3">{s.student?.email || "—"}</td>
+                  <td className="px-6 py-3 font-medium">{s.name || "—"}</td>
+                  <td className="px-6 py-3">{s.email || "—"}</td>
+                  <td className="px-6 py-3">{s.branch || "-"}</td>
+                  <td className="px-6 py-3">{s.cgpa || "-"}</td>
                   <td className="px-6 py-3">{s.role || "—"}</td>
-                  <td className="px-6 py-3">{s.drive?.title || "—"}</td>
-                  <td className="px-6 py-3">
-                    {s.roundsCleared} / {s.totalRounds}
-                  </td>
+                  <td className="px-6 py-3">{s.pack || "—"} LPA</td>
+                  <td className="px-6 py-3">{s.bond || "—"} YEARS</td>
                 </tr>
               ))}
             </tbody>
@@ -196,7 +233,7 @@ export default function CompanyDashboard() {
   );
 }
 
-/* ================= COMPONENTS ================= */
+/* COMPONENTS */
 
 function StatCard({ icon, label, value, accent = "indigo" }) {
   const bg =

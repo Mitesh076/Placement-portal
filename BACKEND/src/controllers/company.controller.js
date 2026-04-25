@@ -276,17 +276,38 @@ export const getApprovedCompanies = async (req, res) => {
 
 export const getCompanyWisePlacement = async (req, res) => {
   try {
-    // ✅ Only get drives for visited companies
     const drives = await Drive.find().populate("company");
 
-    const result = drives
-      .filter((d) => d.company) // ✅ skip if company ref is broken
-      .map((d) => ({
-        company: d.company?.name,
-        location: d.company?.location,
-        pack: d.pack,
-        splaced: d.company?.splaced || 0,
-      }));
+    const companyMap = {};
+
+    drives.forEach((d) => {
+      if (!d.company) return;
+
+      const companyId = d.company._id.toString();
+
+      if (!companyMap[companyId]) {
+        companyMap[companyId] = {
+          company: d.company.name,
+          location: d.company.location,
+          totalDrives: 0,
+          totalPlaced: d.company.splaced || 0,
+          totalPackage: 0, // 🔹 sum of packages
+        };
+      }
+
+      companyMap[companyId].totalDrives += 1;
+      companyMap[companyId].totalPackage += d.pack || 0;
+    });
+
+    // 🔹 calculate average
+    const result = Object.values(companyMap).map((c) => ({
+      company: c.company,
+      location: c.location,
+      totalDrives: c.totalDrives,
+      totalPlaced: c.totalPlaced,
+      avgPackage:
+        c.totalDrives > 0 ? (c.totalPackage / c.totalDrives).toFixed(2) : 0,
+    }));
 
     res.json(result);
   } catch (err) {
@@ -294,7 +315,6 @@ export const getCompanyWisePlacement = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 // company dashboard starts
 
 export const createCompanyProfile = async (req, res) => {
@@ -562,49 +582,86 @@ export const getSelectedStudents = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Step 1: get Company._id via CompanyData
     const companyData = await CompanyData.findOne({ user: userId });
-
     if (!companyData) {
       return res.status(404).json({ message: "Company not found" });
     }
-
     const companyId = companyData.company;
 
-    const selected = await PlacementStatus.find({
-      company: companyId,
+    // Step 2: find placed students using "comp" field
+    const placed = await PlacementStatus.find({
+      comp: companyId,
       status: "Placed",
     })
       .populate({
         path: "student",
-        select: "name email profilePic",
-      })
-      .populate({
-        path: "drive",
-        select: "title",
+        select: "name branch erno cgpa batch mobile user profilepic", // ← added profilepic
       })
       .sort({ createdAt: -1 });
 
-    const formatted = selected.map((item) => ({
-      appliedId: item._id,
-      student: item.student,
-      role: item.role,
-      drive: item.drive,
-      roundsCleared: item.roundsCleared || 0,
-      totalRounds: item.totalRounds || 4,
-    }));
+    console.log("placed count:", placed.length);
 
-    res.status(200).json({
-      success: true,
-      data: formatted,
+    if (placed.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    // Step 3: batch fetch User docs for email
+    const userIds = placed.map((p) => p.student?.user).filter(Boolean);
+    const userDocs = await User.find({ _id: { $in: userIds } }).select(
+      "_id email username",
+    );
+    const userMap = new Map();
+    userDocs.forEach((u) => userMap.set(u._id.toString(), u));
+
+    // Step 4: get Applied docs → populate drive with correct field names
+    const appliedDocs = await Applied.find({
+      company: companyId,
+      status: "Selected",
+    }).populate("drive", "roles pack bond jobtype drivedate"); // ← correct field names from Drive schema
+    const appliedMap = new Map();
+    appliedDocs.forEach((a) => appliedMap.set(a.user.toString(), a));
+
+    // Step 5: merge
+    const formatted = placed.map((item) => {
+      const student = item.student || {};
+      const userDoc = userMap.get(student.user?.toString()) || {};
+      const applied = appliedMap.get(student.user?.toString()) || {};
+      const drive = applied.drive || {};
+
+      return {
+        _id: item._id,
+        // Student
+        name: student.name || "N/A",
+        branch: student.branch || "N/A",
+        erno: student.erno || "N/A",
+        cgpa: student.cgpa ?? "N/A",
+        batch: student.batch || "N/A",
+        profilepic: student.profilepic || null, // ← from Student
+        // User
+        email: userDoc.email || "N/A",
+        username: userDoc.username || "N/A",
+        // PlacementStatus
+        pcname: item.pcname || "N/A",
+        pack: item.pack || "N/A",
+        // Drive
+        role: drive.roles || "N/A", // ← "roles" not "role"
+        bond: drive.bond || "N/A", // ← added bond
+        jobtype: drive.jobtype || "N/A",
+        drivedate: drive.drivedate || null,
+        // No location field in Drive schema
+      };
     });
+
+    return res.status(200).json({ success: true, data: formatted });
   } catch (error) {
-    res.status(500).json({
+    console.error("getSelectedStudents:", error);
+    return res.status(500).json({
       message: "Failed to fetch selected students",
       error: error.message,
     });
   }
 };
-
 export const requestCompanyVerification = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -632,6 +689,45 @@ export const requestCompanyVerification = async (req, res) => {
     res.status(500).json({
       message: "Verification request failed",
       error: error.message,
+    });
+  }
+};
+
+export const completePlacementProcess = async (req, res) => {
+  try {
+    const userId = req.user.id; // from protect middleware
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
+
+    // 🔍 Find company using logged-in user
+    const company = await CompanyData.findOne({ user: userId });
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found",
+      });
+    }
+
+    // ✅ Mark as visited
+    company.visited = true;
+    await company.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Placement process completed",
+      data: company,
+    });
+  } catch (error) {
+    console.error("COMPLETE PLACEMENT ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
 };

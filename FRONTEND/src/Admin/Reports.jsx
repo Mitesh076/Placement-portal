@@ -166,8 +166,8 @@ function CompanyReportTable({ data }) {
               <tr key={i} className="border-t hover:bg-slate-50">
                 <td className="px-6 py-3">{c.company}</td>
                 <td className="px-6 py-3">{c.location}</td>
-                <td className="px-6 py-3">{c.pack} LPA</td>
-                <td className="px-6 py-3">{c.splaced}</td>
+                <td className="px-6 py-3">{c.avgPackage} LPA</td>
+                <td className="px-6 py-3">{c.totalPlaced}</td>
               </tr>
             ))
           ) : (

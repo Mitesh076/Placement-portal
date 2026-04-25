@@ -14,7 +14,7 @@ const placementStatusSchema = new mongoose.Schema(
       ref: "Student",
       required: true,
     },
-    company: {
+    comp: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
     },

@@ -174,7 +174,7 @@ export default function CompanyDrive() {
       {/* FORM MODAL */}
       {showForm && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-[500px] space-y-4">
+          <div className="bg-white rounded-xl p-6 w-125 space-y-4">
             <h3 className="text-xl font-semibold flex items-center gap-2">
               <Briefcase size={18} />
               {editingId ? "Edit Drive" : "Add Drive"}

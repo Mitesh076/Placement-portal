@@ -112,13 +112,13 @@ export default function StudentDashboard() {
 
         <StatCard
           icon={<Briefcase />}
-          label="Applied Companies"
+          label="Applied Drives"
           value={stats.applied}
         />
 
         <StatCard
           icon={<Building2 />}
-          label="Eligible Companies"
+          label="Eligible Drives"
           value={stats.eligible}
         />
 

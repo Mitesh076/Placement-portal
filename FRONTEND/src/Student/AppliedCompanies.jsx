@@ -107,7 +107,7 @@ export default function AppliedCompanies() {
     <div className="space-y-6 w-full p-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold">Applied Companies</h2>
+        <h2 className="text-xl font-semibold">Applied Drives</h2>
         <p className="text-sm text-slate-500">Overview of your applications</p>
       </div>
 
@@ -115,17 +115,17 @@ export default function AppliedCompanies() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           icon={<Briefcase />}
-          label="Total Companies"
+          label="Total Drives"
           value={stats.total || 0}
         />
         <StatCard
           icon={<Building2 />}
-          label="Eligible Companies"
+          label="Eligible Drives"
           value={stats.eligible || 0}
         />
         <StatCard
           icon={<Briefcase />}
-          label="Applied Companies"
+          label="Applied Drives"
           value={stats.applied || 0}
         />
       </div>

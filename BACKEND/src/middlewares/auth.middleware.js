@@ -10,6 +10,7 @@ export const protect = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    console.log("decoded token:", decoded); // paste what this prints
     // 🔥 IMPORTANT (you are using userId)
     req.user = decoded;
 
