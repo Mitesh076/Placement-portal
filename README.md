@@ -105,7 +105,7 @@ Built using the **MERN Stack**, the platform ensures transparency, real-time upd
 - Interview Rounds
 - Selected Students
 
-## 📌 Installation & Setup (Frontend)
+## 📌 Installation & Setup
 
 # Clone the repository
 
@@ -114,6 +114,10 @@ git clone https://github.com/Mitesh076/Placement-portal.git
 # Navigate to frontend
 
 cd frontend
+
+# Navigate to Backend
+
+cd Backend
 
 # Install dependencies
 
